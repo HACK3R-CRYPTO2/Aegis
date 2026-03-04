@@ -75,6 +75,17 @@ We proved the logic works with local integration tests.
 forge test --match-contract AegisIntegrationTest -vv
 ```
 
+### ✅ Verified Test Scenarios
+
+We proved the logic works with comprehensive integration tests:
+
+| Test Case | Scenario | Status |
+| :--- | :--- | :--- |
+| **Oracle Update** | Updates `MockOracle` price on L1 | ✅ PASS |
+| **Access Control** | Confirms only Sentinel can call Hook | ✅ PASS |
+| **Panic Trigger** | Triggers `setPanicMode(true)` on L2 | ✅ PASS |
+| **Circuit Breaker** | **REVERTS** v4 swaps when Panic is active | ✅ PASS |
+
 ### 3. Deploy to Testnets
 We have successfully deployed the system across 3 networks.
 

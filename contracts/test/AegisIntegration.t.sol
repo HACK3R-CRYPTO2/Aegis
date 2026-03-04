@@ -60,8 +60,18 @@ contract AegisIntegrationTest is BaseTest {
         PoolKey memory key;
         SwapParams memory params;
 
-        vm.prank(address(poolManager)); // <--- FIXED: Call as PoolManager
+        vm.prank(address(poolManager));
         vm.expectRevert(AegisHook.PoolPaused.selector);
         hook.beforeSwap(address(0), key, params, "");
+    }
+
+    function test_AccessControl_Revert() public {
+        // 1. Try to set panic mode as a random user (not sentinel, not owner)
+        address randomUser = address(0x12345);
+        vm.prank(randomUser);
+
+        // 2. Expect Revert "OnlySentinel"
+        vm.expectRevert(AegisHook.OnlySentinel.selector);
+        hook.setPanicMode(true);
     }
 }

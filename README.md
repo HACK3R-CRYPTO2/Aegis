@@ -100,7 +100,18 @@ npm run dev
 ```
 
 ## 📜 Deployed & Verified
-See our [Walkthrough](/walkthrough.md) for the full demo script.
+
+We proved the logic with **Integration Tests** and a **Live Demo**.
+
+### ✅ Security Verification (Forge)
+| Test Case | Scenario | Status |
+| :--- | :--- | :--- |
+| **Oracle Update** | Updates `MockOracle` price on L1 | ✅ PASS |
+| **Access Control** | Confirms only Sentinel can call Hook | ✅ PASS |
+| **Panic Trigger** | Triggers `setPanicMode(true)` on L2 | ✅ PASS |
+| **Circuit Breaker** | **REVERTS** v4 swaps when Panic is active | ✅ PASS |
+
+See our [Verification Guide](walkthrough.md) for a step-by-step reproduction of the system flow.
 
 | Network | Contract | Address |
 | :--- | :--- | :--- |

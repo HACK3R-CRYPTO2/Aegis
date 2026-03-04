@@ -1,6 +1,8 @@
 import { StatusCard } from '../components/StatusCard'
 import { OracleSim } from '../components/OracleSim'
 import { TradingView } from '../components/TradingView'
+import { NetworkMonitor } from '../components/NetworkMonitor'
+import { ConnectButton } from '../components/ConnectButton'
 import { ShieldCheck } from 'lucide-react'
 
 export default function Home() {
@@ -38,6 +40,7 @@ export default function Home() {
                 <span>Reactive</span>
               </div>
             </div>
+            <ConnectButton />
           </div>
         </header>
 
@@ -57,6 +60,12 @@ export default function Home() {
               <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest">Oracle Simulation</h3>
             </div>
             <OracleSim />
+
+            <div className="mt-8 mb-2 flex items-center gap-2">
+              <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse" />
+              <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest">Reactive Network Feed</h3>
+            </div>
+            <NetworkMonitor />
           </div>
 
           {/* Right Column: User View */}
