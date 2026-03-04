@@ -56,8 +56,13 @@ sequenceDiagram
 ```
 
 ## 🛠️ Challenges We Ran Into
-*   **Cross-Chain Latency**: synchronizing the "Crash Event" on L1 with the "Pause Action" on L2 is a race against time. We solved this by using Unichain's fast block times to maximize our window of opportunity.
-*   **Reactive SDK**: Integrating the new Reactive SDK required deep diving into their system contracts to mock the cross-chain calls locally.
+*   **Reactive SDK Integration**: The Reactive Network SDK underwent recent changes. We had to dig into the `node_modules` to find the correct import path for `AbstractReactive`.
+*   **Cross-Chain Checksums**: Foundry's deployment scripts are extremely strict about address checksums. We generated valid Deployer addresses for Unichain and Reactive, but the compiler rejected them until we applied strict EIP-55 formatting dynamically.
+*   **Hook Mining**: Calculating the correct salt to get the `BEFORE_SWAP` flag (0x80...) required writing a custom `HookMiner` script.
+*   **Infrastructure Gaps**: Reactive Network is an amazing technology, but public testnet relayers for **Unichain Sepolia** (Chain ID 1301) were not fully stable during the hackathon. 
+    *   **The Issue**: The `Sentinel` contract on Reactive Network correctly detected events on Sepolia, but the message sometimes got "stuck" because the public relayer node wasn't forwarding it to Unichain fast enough.
+    *   **The Solution**: We built a **Hybrid Relayer** (`relay.ts`) to bridge the gap. It monitors the Oracle directly as a fallback to ensure the demo works seamlessly despite testnet latency.
+    *   **Deep Dive**: Read [Why We Built a Custom Relayer](RELAYER_EXPLAINED.md) for the full architectural decision.
 
 ## 🔮 What's Next for Aegis
 *   **Granular Protection**: Instead of pausing the whole pool, we plan to implement "Dynamic Spreads" (widen fees during volatility).
@@ -65,7 +70,7 @@ sequenceDiagram
 
 ---
 
-## � Documentation
+##  Documentation
 [Contracts README](contracts/README.md): Smart contract setup, deployment, and testing details.
 
 [Frontend README](frontend/README.md): Dashboard setup and feature documentation.
@@ -74,16 +79,34 @@ sequenceDiagram
 
 ---
 
-## �💻 Quick Start
+## 💻 Quick Start
 ```bash
-# 1. Install
+# 2. Test Contracts
 git clone https://github.com/ogazboiz/aegis.git
 cd aegis/contracts
 forge install
-
-# 2. Test
 forge test
+
+# 3. Run Dashboard (Frontend)
+cd ../frontend
+npm install
+
+# Start the Relayer (Background)
+npm run relay &
+
+# Start the UI
+npm run dev
+# Open http://localhost:3000
 ```
+
+## 📜 Deployed & Verified
+See our [Walkthrough](/walkthrough.md) for the full demo script.
+
+| Network | Contract | Address |
+| :--- | :--- | :--- |
+| **Ethereum Sepolia** | MockOracle | `0x29f8f8d2A00330F9683e73a926F61AE7E91cBA3b` |
+| **Unichain Sepolia** | AegisHook | `0xBaa0573e3BE4291b58083e717E9EF5051772C080` |
+| **Reactive Lasna** | AegisSentinel | `0x0f764437ffBE1fcd0d0d276a164610422710B482` |
 
 ## 👥 Team
 *   **Ogazboiz** - Full Stack Developer

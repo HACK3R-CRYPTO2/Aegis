@@ -28,6 +28,12 @@ contract AegisSentinel is AbstractReactive {
     ) AbstractReactive() {
         owner = msg.sender;
         aegisHook = _aegisHook;
+        // Subscription moved to subscribeToOracle()
+    }
+
+    // Manual subscription function to be called after deployment
+    function subscribeToOracle(address _mockOracle) external {
+        require(msg.sender == owner, "Only owner");
 
         // Subscription logic to MockOracle
         bytes memory payload = abi.encodeWithSignature(

@@ -12,24 +12,24 @@ import {Hooks} from "v4-core/src/libraries/Hooks.sol";
 contract DeployHook is Script {
     function run() external {
         uint256 deployerPrivateKey = vm.envUint("PRIVATE_KEY");
+        address deployer = vm.addr(deployerPrivateKey);
         vm.startBroadcast(deployerPrivateKey);
 
-        // Unichain Testnet PoolManager (Check docs for official address, using placeholder or deploying new if needed)
-        // For hackathon v4 template usually requires deploying manager or using canonical
+        // Unichain Sepolia PoolManager
         IPoolManager manager = IPoolManager(
-            0x00000000000444de76E3D23D922DeC284999ea16
-        ); // Canonical v4 address on some testnets, verify for Unichain
+            0x00B036B58a818B1BC34d502D3fE730Db729e62AC
+        );
 
         // Mine a salt for the hook to get flags: BEFORE_SWAP_FLAG = 1 << 7 = 128
         uint160 flags = uint160(Hooks.BEFORE_SWAP_FLAG);
         (address hookAddress, bytes32 salt) = HookMiner.find(
-            address(this),
+            0x4e59b44847b379578588920cA78FbF26c0B4956C, // Forge Script CREATE2 Proxy
             flags,
             type(AegisHook).creationCode,
-            abi.encode(address(manager), msg.sender)
+            abi.encode(address(manager), deployer)
         );
 
-        AegisHook hook = new AegisHook{salt: salt}(manager, msg.sender);
+        AegisHook hook = new AegisHook{salt: salt}(manager, deployer);
         console.log("AegisHook deployed to:", address(hook));
 
         vm.stopBroadcast();

@@ -11,9 +11,10 @@ contract DeploySentinel is Script {
         vm.startBroadcast(deployerPrivateKey);
 
         // CONFIGURATION
-        address REACTIVE_SYSTEM_SERVICE = 0xc7203561ef179333005A92812A53d9142dD9d47F; // Kopli Testnet Service
-        address AEGIS_HOOK = vm.envAddress("AEGIS_HOOK_ADDRESS"); // Get from Unichain deployment
-        address MOCK_ORACLE = vm.envAddress("MOCK_ORACLE_ADDRESS"); // Get from Sepolia deployment
+        // CONFIGURATION
+        address REACTIVE_SYSTEM_SERVICE = 0x0000000000000000000000000000000000fffFfF; // Lasna Testnet Service
+        address AEGIS_HOOK = 0xBaa0573e3BE4291b58083e717E9EF5051772C080; // Unichain deployment
+        address MOCK_ORACLE = 0x29f8f8d2A00330F9683e73a926F61AE7E91cBA3b; // Sepolia deployment
 
         AegisSentinel sentinel = new AegisSentinel(
             REACTIVE_SYSTEM_SERVICE,
@@ -21,6 +22,10 @@ contract DeploySentinel is Script {
             MOCK_ORACLE
         );
         console.log("AegisSentinel deployed to:", address(sentinel));
+
+        // Call subscribeToOracle
+        // sentinel.subscribeToOracle(MOCK_ORACLE);
+        // console.log("Subscribed to MockOracle at:", MOCK_ORACLE);
 
         vm.stopBroadcast();
     }

@@ -13,13 +13,13 @@ remappings = [
     "v4-periphery/=lib/uniswap-hooks/lib/v4-periphery/"
 ]
 src = "src"
-via_ir = false
+via_ir = true
 
 
 [rpc_endpoints]
-unichain_sepolia = "https://sepolia.unichain.org"
-reactive_kopli = "https://kopli-rpc.reactive.network"
-sepolia = "https://rpc.sepolia.org"
+unichain_sepolia = "https://unichain-sepolia-rpc.publicnode.com"
+reactive = "https://lasna-rpc.rnk.dev/"
+sepolia = "https://eth-sepolia.g.alchemy.com/v2/uHo7ICSBqpDRguF-DhjWWF72l-sPapYX"
 
 [lint]
 exclude_lints = ["screaming-snake-case-immutable", "screaming-snake-case-const"]
