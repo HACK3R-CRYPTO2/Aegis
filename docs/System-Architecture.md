@@ -15,63 +15,38 @@ For information about specific smart contract implementations, see [Smart Contra
 
 Aegis operates as a distributed system spanning three blockchain networks plus off-chain infrastructure:
 
-```
-Off-Chain Infrastructure
+```mermaid
+graph TD
+    subgraph L1 [Layer 1: Ethereum Sepolia]
+        Oracle[MockOracle<br>0x29f8...BA3b]
+        Registry[AegisGuardianRegistry<br>ERC-721 + ERC-8004]
+    end
 
-Layer 2: Unichain Sepolia (Chain ID: 1301)
+    subgraph Reactive [Reactive Network Kopli]
+        Sentinel[AegisSentinel<br>0x0f76...b482]
+    end
 
-Reactive Network Kopli (Chain ID: 5318007)
+    subgraph L2 [Layer 2: Unichain Sepolia]
+        Hook[AegisHook<br>0xBaa0...2C080]
+        Pool[Uniswap v4 PoolManager]
+    end
 
-Layer 1: Ethereum Sepolia (Chain ID: 11155111)
+    subgraph OffChain [Off-Chain Infrastructure]
+        Relayer[Hybrid Relayer<br>relay.ts]
+        Dashboard[Next.js Dashboard<br>localhost:3000]
+    end
 
-emit PriceUpdate(uint256)
-
-emit NewFeedback(address, uint256)
-
-setPanicMode(bool)
-
-boostReputation(address, uint256)
-
-recordIntervention(address, uint256)
-
-beforeSwap() gate
-
-fallback monitor
-
-emergency trigger
-
-read-only queries
-
-read-only queries
-
-read-only queries
-
-read-only queries
-
-MockOracle
-0x29f8...BA3b
-Price Feed Source
-
-AegisGuardianRegistry
-ERC-721 + ERC-8004
-Reputation Storage
-
-AegisSentinel
-0x0f76...b482
-Event Monitor & Orchestrator
-
-AegisHook
-0xBaa0...2C080
-Circuit Breaker
-
-Uniswap v4 PoolManager
-Liquidity Pools
-
-relay.ts
-Hybrid Fallback Relayer
-
-Next.js Dashboard
-localhost:3000
+    Oracle -->|PriceUpdate| Sentinel
+    Registry -->|NewFeedback| Sentinel
+    Sentinel -->|setPanicMode| Hook
+    Sentinel -->|boostReputation| Hook
+    Hook -->|beforeSwap| Pool
+    Relayer -.->|Fallback Monitor| Oracle
+    Relayer -.->|Emergency Trigger| Hook
+    Dashboard -.->|Read-Only| Oracle
+    Dashboard -.->|Read-Only| Sentinel
+    Dashboard -.->|Read-Only| Hook
+    Dashboard -.->|Read-Only| Registry
 ```
 
 **Sources**: [README.md56-75](https://github.com/HACK3R-CRYPTO/Aegis/blob/5ea5ecc2/README.md#L56-L75)[contracts/README.md11-26](https://github.com/HACK3R-CRYPTO/Aegis/blob/5ea5ecc2/contracts/README.md#L11-L26)
@@ -106,47 +81,24 @@ The registry emits `NewFeedback` events when guardians perform stabilizing actio
 
 The `AegisSentinel` contract is the autonomous orchestrator deployed on Reactive Network Kopli testnet.
 
-```
-Triggered Actions
+```mermaid
+graph TD
+    subgraph Subscriptions [Subscribed Events]
+        Price[PriceUpdate<br>from Oracle]
+        Feedback[NewFeedback<br>from Registry]
+    end
 
-Subscribed Events
+    Sentinel[AegisSentinel Contract]
 
-AegisSentinel Contract
+    subgraph Actions [Triggered Actions]
+        Panic[setPanicMode<br>to Hook]
+        Boost[boostReputation<br>to Hook]
+    end
 
-event data
-
-event data
-
-if price < THRESHOLD
-
-on guardian feedback
-
-registers
-
-registers
-
-constructor()
-Sets ORACLE_ADDR
-Sets HOOK_ADDR
-Sets REGISTRY_ADDR
-
-react()
-Callback Handler
-
-subscribe()
-Event Registration
-
-PriceUpdate
-(from Oracle)
-
-NewFeedback
-(from Registry)
-
-setPanicMode(bool)
-→ Hook on L2
-
-boostReputation(address, uint256)
-→ Hook on L2
+    Price -->|"if price < THRESHOLD"| Sentinel
+    Feedback -->|"on guardian feedback"| Sentinel
+    Sentinel --> Panic
+    Sentinel --> Boost
 ```
 PropertyValueContract`AegisSentinel.sol`Address`0x0f764437ffBE1fcd0d0d276a164610422710B482`NetworkReactive Network Kopli (Chain ID: 5318007)Key Functions`react()`, `subscribe()`DependenciesInherits from `AbstractReactive`
 The `AegisSentinel` uses the Reactive Network's event subscription mechanism to monitor events on Layer 1 and trigger cross-chain function calls to Layer 2. It implements the autonomous watcher pattern, eliminating the need for centralized keeper infrastructure.
@@ -163,57 +115,29 @@ The `AegisSentinel` uses the Reactive Network's event subscription mechanism to 
 
 The `AegisHook` is a Uniswap v4 hook contract that implements the circuit breaker mechanism.
 
-```
-External Calls
+```mermaid
+graph TD
+    subgraph Inputs [External Calls]
+        Sentinel[AegisSentinel]
+        Registry[AegisGuardianRegistry]
+    end
 
-beforeSwap Logic
+    subgraph Hook [AegisHook.sol]
+        State[State: panicMode, reputationScores]
+        Logic[beforeSwap Logic]
+    end
 
-AegisHook.sol
+    subgraph Output
+        Allow[Return CONTINUE]
+        Revert[Revert PoolPaused]
+    end
 
-yes
-
-no
-
-VIP
-
-standard
-
-updates
-
-updates
-
-triggers
-
-State Variables:
-bool panicMode
-mapping reputationScores
-
-beforeSwap()
-IHooks Interface
-
-setPanicMode(bool)
-onlySentinel
-
-boostReputation(address, uint256)
-onlySentinel
-
-recordIntervention(address, uint256)
-
-panicMode == true?
-
-reputationScore > 90?
-
-Calculate Fee
-0.01% for VIP
-0.30% for others
-
-revert PoolPaused()
-
-return bytes4
-(CONTINUE)
-
-emit InterventionRecorded
-→ L1 Registry
+    Sentinel -->|setPanicMode| State
+    Sentinel -->|boostReputation| State
+    
+    Logic -->|Check panicMode| State
+    State -->|"If panicMode=true & rep < 90"| Revert
+    State -->|"If panicMode=false OR rep > 90"| Allow
 ```
 PropertyValueContract`AegisHook.sol`Address`0xBaa0573e3BE4291b58083e717E9EF5051772C080`NetworkUnichain Sepolia (Chain ID: 1301)Hook Permissions`BEFORE_SWAP` (0x80... address prefix)Key State`bool panicMode`, `mapping(address => uint256) reputationScores`Access Control`onlySentinel` modifier restricts cross-chain calls
 The hook address must have the `BEFORE_SWAP` flag, which is achieved through CREATE2 deployment with a calculated salt. See [Hook Mining](/HACK3R-CRYPTO/Aegis/3.4-hook-mining) for details on the address generation process.
@@ -234,32 +158,23 @@ The hook address must have the `BEFORE_SWAP` flag, which is achieved through CRE
 
 The `AegisSentinel` uses the Reactive Network's native event subscription system to monitor Layer 1:
 
-```
-"MockOracle
-(Sepolia L1)"
-"Reactive Network VM"
-"AegisSentinel
-(Reactive)"
-"Deployment Script"
-"MockOracle
-(Sepolia L1)"
-"Reactive Network VM"
-"AegisSentinel
-(Reactive)"
-"Deployment Script"
-Continuous monitoring begins
-Cross-chain callback prepared
-alt
-["price < THRESHOLD"]
-["price >= THRESHOLD"]
-"deploy(ORACLE_ADDR, HOOK_ADDR)"
-"subscribe(ORACLE_TOPIC, ORACLE_ADDR)"
-"register subscription"
-"setPrice(1000)"
-"emit PriceUpdate(1000, timestamp)"
-"react(uint256 price)"
-"detect crash condition"
-"no action"
+```mermaid
+sequenceDiagram
+    participant Deployer
+    participant Sentinel as AegisSentinel
+    participant VM as Reactive VM
+    participant Oracle as MockOracle
+
+    Deployer->>Sentinel: deploy(oracle, hook)
+    Deployer->>Sentinel: subscribe()
+    Sentinel->>VM: subscribe(topic, oracle)
+    
+    loop Continuous Monitoring
+        Oracle->>Oracle: setPrice(1000)
+        Oracle->>VM: emit PriceUpdate(1000)
+        VM->>Sentinel: react(price)
+        Note over Sentinel: Check price < THRESHOLD
+    end
 ```
 
 The subscription mechanism is configured during deployment via the `subscribe()` function call, which registers the event topic hash and source contract address with the Reactive Network VM.
@@ -272,48 +187,23 @@ The subscription mechanism is configured during deployment via the `subscribe()`
 
 The complete sequence from price crash to pool protection:
 
-```
-"End User"
-"PoolManager
-(Uniswap v4)"
-"AegisHook
-(L2 Unichain)"
-"AegisSentinel
-(Reactive)"
-"MockOracle
-(L1 Sepolia)"
-"Market Event"
-"End User"
-"PoolManager
-(Uniswap v4)"
-"AegisHook
-(L2 Unichain)"
-"AegisSentinel
-(Reactive)"
-"MockOracle
-(L1 Sepolia)"
-"Market Event"
-Cross-chain call executed
-alt
-["Standard User (rep < 90)"]
-["VIP Guardian (rep >= 90)"]
-"Price crash occurs"
-"setPrice(1000)"
-"emit PriceUpdate(1000, block.timestamp)"
-"react() callback triggered"
-"if (price < 1500) condition met"
-"setPanicMode(true)"
-"panicMode = true"
-"swap(params)"
-"beforeSwap() hook call"
-"check panicMode"
-"check reputationScores[msg.sender]"
-"revert PoolPaused()"
-"❌ Transaction Failed"
-"return bytes4(CONTINUE)"
-"execute swap with 0.01% fee"
-"✅ Swap Successful"
-"recordIntervention(guardian, volume)"
+```mermaid
+sequenceDiagram
+    participant Market
+    participant Oracle as MockOracle (L1)
+    participant Sentinel as AegisSentinel (Reactive)
+    participant Hook as AegisHook (L2)
+    participant User as End User
+
+    Market->>Oracle: Price Crash (price < 1500)
+    Oracle->>Sentinel: emit PriceUpdate
+    Sentinel->>Hook: setPanicMode(true)
+    
+    rect rgb(255, 200, 200)
+        Note over Hook: Panic Mode ACTIVE
+        User->>Hook: swap()
+        Hook--xUser: Revert PoolPaused()
+    end
 ```
 
 This flow demonstrates the autonomous nature of the system—no manual intervention or centralized server is required once the contracts are deployed and subscribed.
@@ -326,34 +216,19 @@ This flow demonstrates the autonomous nature of the system—no manual intervent
 
 The bidirectional feedback loop between L1 and L2:
 
-```
-"AegisSentinel
-(Reactive)"
-"AegisGuardianRegistry
-(L1)"
-"AegisHook
-(L2)"
-"Guardian Address"
-"AegisSentinel
-(Reactive)"
-"AegisGuardianRegistry
-(L1)"
-"AegisHook
-(L2)"
-"Guardian Address"
-Guardian provides liquidity during panic
-Cross-chain call to L1
-Cross-chain call to L2
-Guardian now eligible for VIP lane
-"swap() during panicMode"
-"Record stabilizing action"
-"recordIntervention(guardian, volume)"
-"Update on-chain stats"
-"emit NewFeedback(guardian, volume)"
-"react() callback triggered"
-"Calculate reputation boost"
-"boostReputation(guardian, boostAmount)"
-"reputationScores[guardian] += boost"
+```mermaid
+sequenceDiagram
+    participant Guardian
+    participant Registry as AegisGuardianRegistry (L1)
+    participant Sentinel as AegisSentinel (Reactive)
+    participant Hook as AegisHook (L2)
+
+    Guardian->>Registry: recordIntervention()
+    Registry->>Sentinel: emit NewFeedback
+    Sentinel->>Hook: boostReputation(guardian)
+    Hook->>Hook: Update reputationScores
+    
+    Note over Hook: Guardian now has VIP access
 ```
 
 This creates a trustless incentive mechanism where guardians who stabilize pools during volatility automatically earn on-chain reputation that grants them privileged access (lower fees) during future panic events.

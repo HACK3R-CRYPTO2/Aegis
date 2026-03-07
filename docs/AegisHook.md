@@ -24,36 +24,25 @@ PropertyValue**Network**Unichain Sepolia (L2)**Chain ID**1301**Contract Address*
 
 ### Cross-Chain Integration
 
-```
-Unichain Sepolia (L2)
-
-Reactive Network
-
-Ethereum Sepolia (L1)
-
-PriceUpdate events
-
-setPanicMode(true)
-
-implements IHooks
-
-beforeSwap() callback
-
-allows/reverts
-
-MockOracle
-0x29f8...BA3b
-
-AegisSentinel
-0x0f76...b482
-
-AegisHook
-0xBaa0...2C080
-
-Uniswap v4 PoolManager
-0x00B0...62AC
-
-Protected Pool
+```mermaid
+graph TD
+    subgraph L1 [Ethereum Sepolia]
+        Oracle[MockOracle]
+    end
+    
+    subgraph Reactive [Reactive Network]
+        Sentinel[AegisSentinel]
+    end
+    
+    subgraph L2 [Unichain Sepolia]
+        Hook[AegisHook]
+        Pool[Uniswap v4 PoolManager]
+    end
+    
+    Oracle -->|PriceUpdate| Sentinel
+    Sentinel -->|setPanicMode| Hook
+    Hook -.->|implements| IHooks
+    Hook -->|beforeSwap| Pool
 ```
 
 **Sources:**[contracts/README.md11-26](https://github.com/HACK3R-CRYPTO/Aegis/blob/5ea5ecc2/contracts/README.md#L11-L26)
@@ -62,28 +51,14 @@ Protected Pool
 
 AegisHook requires the `BEFORE_SWAP` flag, which corresponds to an address prefix of `0x80...`. This is achieved through CREATE2 salt mining during deployment.
 
-```
-AegisHook Implementation
-
-Uniswap v4 Hook System
-
-calls before swap
-
-implemented by
-
-checks
-
-protects
-
-PoolManager
-
-IHooks Interface
-
-beforeSwap()
-
-panicMode state
-
-onlySentinel modifier
+```mermaid
+graph LR
+    Hook[AegisHook] -->|implements| IHooks
+    Pool[PoolManager] -->|calls| Hook
+    
+    check[Check Flag: BEFORE_SWAP]
+    Pool -.-> check
+    check -.->|0x80...| Hook
 ```
 
 **Sources:**[contracts/README.md32-37](https://github.com/HACK3R-CRYPTO/Aegis/blob/5ea5ecc2/contracts/README.md#L32-L37)
@@ -94,51 +69,36 @@ onlySentinel modifier
 
 The primary function of AegisHook is to implement a circuit breaker that can halt trading during market crises.
 
-```
-Deploy Hook
-
-setPanicMode(true)
-
-setPanicMode(false)
-
-Normal
-
-beforeSwap returns
-
-AllowSwaps
-
-Panic
-
-beforeSwap reverts PoolPaused()
-
-RejectSwaps
+```mermaid
+stateDiagram-v2
+    [*] --> Normal
+    Normal --> Panic : setPanicMode(true)
+    Panic --> Normal : setPanicMode(false)
+    
+    Normal --> AllowSwaps : beforeSwap()
+    Panic --> RejectSwaps : beforeSwap()
 ```
 
 **Sources:**[contracts/README.md32-37](https://github.com/HACK3R-CRYPTO/Aegis/blob/5ea5ecc2/contracts/README.md#L32-L37)
 
 ### Swap Interception Flow
 
-```
-Pool
-AegisHook
-PoolManager
-Trader
-Pool
-AegisHook
-PoolManager
-Trader
-alt
-[Panic Mode Active]
-[Normal Operation]
-swap()
-beforeSwap()
-Check panicMode == true
-Revert PoolPaused()
-Transaction Failed
-Check panicMode == false
-Return success
-Execute swap
-Transaction Success
+```mermaid
+sequenceDiagram
+    participant Trader
+    participant Pool as PoolManager
+    participant Hook as AegisHook
+
+    Trader->>Pool: swap()
+    Pool->>Hook: beforeSwap()
+    
+    alt Panic Mode Active
+        Hook--xPool: Revert PoolPaused()
+        Pool--xTrader: Transaction Failed
+    else Normal Operation
+        Hook->>Pool: Return Success
+        Pool->>Trader: Execute Swap
+    end
 ```
 
 **Sources:**[contracts/README.md32-37](https://github.com/HACK3R-CRYPTO/Aegis/blob/5ea5ecc2/contracts/README.md#L32-L37)
@@ -149,30 +109,12 @@ Transaction Success
 
 AegisHook implements a dual access control system:
 RoleAddress TypePermissionsPurpose**Owner**EOA (Deployer)Administrative functionsEmergency recovery and upgrades**Sentinel**Contract Address`setPanicMode()`Cross-chain autonomous control
-```
-State
-
-Protected Functions
-
-Access Control
-
-authorized
-
-authorized
-
-modifies
-
-Owner
-(Deployer EOA)
-
-AegisSentinel
-(Reactive Network)
-
-setPanicMode()
-
-Administrative Functions
-
-panicMode boolean
+```mermaid
+graph TD
+    Owner[Owner EOA] -->|Admin Functions| Hook[AegisHook]
+    Sentinel[AegisSentinel] -->|setPanicMode| Hook
+    
+    Hook --> State[panicMode]
 ```
 
 **Sources:**[contracts/README.md39-45](https://github.com/HACK3R-CRYPTO/Aegis/blob/5ea5ecc2/contracts/README.md#L39-L45)
@@ -189,26 +131,13 @@ The contract enforces that only the AegisSentinel contract on the Reactive Netwo
 
 To satisfy Uniswap v4's hook flag requirements, the AegisHook address must start with `0x80...` to indicate the `BEFORE_SWAP` permission.
 
-```
-Result
-
-Requirements
-
-Deployment Process
-
-enforces
-
-HookMiner Script
-
-Calculated Salt
-
-CREATE2 Deployment
-
-BEFORE_SWAP = 0x80
-
-Address prefix 0x80...
-
-0xBaa0573e3BE4291b58083e717E9EF5051772C080
+```mermaid
+flowchart LR
+    Script[HookMiner] -->|Calculate Salt| Factory[CREATE2 Factory]
+    Factory -->|Deploy| Address[AegisHook Address]
+    
+    Check{Prefix == 0x80?}
+    Address --> Check
 ```
 
 For detailed information on the salt mining process, see [Hook Mining](/HACK3R-CRYPTO/Aegis/3.4-hook-mining).
@@ -225,22 +154,14 @@ VariableTypePurposeAccess`panicMode``bool`Circuit breaker stateRead: public, Wri
 
 ### State Transitions
 
-```
-Constructor
-
-Sentinel calls setPanicMode(true)
-
-Sentinel calls setPanicMode(false)
-
-panicMode = false
-
-panicMode = true
-
-Swaps allowed
-beforeSwap() returns success
-
-Swaps blocked
-beforeSwap() reverts
+```mermaid
+graph TD
+    Constr[Constructor] --> False[panicMode = false]
+    False -->|Sentinel calls setPanicMode(true)| True[panicMode = true]
+    True -->|Sentinel calls setPanicMode(false)| False
+    
+    False -.->|beforeSwap| Success[Allow Swaps]
+    True -.->|beforeSwap| Revert[Revert Swaps]
 ```
 
 **Sources:**[contracts/README.md32-37](https://github.com/HACK3R-CRYPTO/Aegis/blob/5ea5ecc2/contracts/README.md#L32-L37)
@@ -251,41 +172,22 @@ beforeSwap() reverts
 
 AegisHook implements the `IHooks` interface from Uniswap v4, specifically overriding the `beforeSwap()` callback:
 
-```
-Dependencies
-
-AegisHook Implementation
-
-Uniswap v4 Core
-
-defined in
-
-implements
-
-inherits base from
-
-uses utilities from
-
-calls
-
-validated by
-
-IHooks Interface
-
-PoolManager
-
-AegisHook
-
-beforeSwap()
-
-Hook Flags Validation
-
-uniswap-hooks library
-(OpenZeppelin)
-
-v4-core
-
-hookmate
+```mermaid
+classDiagram
+    class IHooks {
+        <<interface>>
+        +beforeSwap()
+    }
+    class AegisHook {
+        +beforeSwap()
+        +setPanicMode()
+    }
+    class PoolManager {
+    }
+    
+    IHooks <|.. AegisHook
+    AegisHook ..> PoolManager : Uses
+    AegisHook ..> HooksLib : Validates
 ```
 
 **Sources:**[contracts/README.md32-37](https://github.com/HACK3R-CRYPTO/Aegis/blob/5ea5ecc2/contracts/README.md#L32-L37)
@@ -294,26 +196,11 @@ hookmate
 
 The `beforeSwap()` function is the critical enforcement point where the circuit breaker logic is applied:
 
-```
-Yes
-
-No
-
-beforeSwap() called
-
-panicMode == true?
-
-revert PoolPaused()
-
-return success
-
-Swap transaction fails
-
-Swap proceeds normally
-
-User transaction reverted
-
-User receives swap output
+```mermaid
+flowchart TD
+    Start[beforeSwap called] --> Check{panicMode == true?}
+    Check -->|Yes| Revert[Revert PoolPaused]
+    Check -->|No| Success[Return Success]
 ```
 
 **Sources:**[contracts/README.md32-37](https://github.com/HACK3R-CRYPTO/Aegis/blob/5ea5ecc2/contracts/README.md#L32-L37)[contracts/README.md86-94](https://github.com/HACK3R-CRYPTO/Aegis/blob/5ea5ecc2/contracts/README.md#L86-L94)
@@ -324,37 +211,20 @@ User receives swap output
 
 AegisHook integrates with the AegisGuardianRegistry to provide preferential treatment to verified guardians who have established on-chain reputation:
 
-```
-Sentinel (Reactive)
-
-AegisHook (L2)
-
-Guardian Registry (L1)
-
-feedback events
-
-calls
-
-updates
-
-checks
-
-queries
-
-AegisGuardianRegistry
-ERC-721 + ERC-8004
-
-Reputation Scores
-
-AegisHook
-
-beforeSwap()
-
-Guardian VIP Check
-
-AegisSentinel
-
-boostReputation()
+```mermaid
+sequenceDiagram
+    participant Sentinel
+    participant Hook
+    participant Guardian
+    
+    Sentinel->>Hook: boostReputation(guardian)
+    Hook->>Hook: Update reputationScores
+    
+    Note over Hook: Guardian attempts swap in Panic Mode
+    
+    Guardian->>Hook: swap()
+    Hook->>Hook: Check reputation > 90
+    Hook->>Guardian: Allow Swap (VIP)
 ```
 
 For details on the reputation system, see [AegisGuardianRegistry](/HACK3R-CRYPTO/Aegis/2.4-aegisguardianregistry).
@@ -371,25 +241,18 @@ When guardians successfully protect pools, the hook can record these interventio
 
 ### Deployment Script Flow
 
-```
-Unichain RPC
-AegisHook
-CREATE2 Factory
-HookMiner
-06_DeployHook.s.sol
-Unichain RPC
-AegisHook
-CREATE2 Factory
-HookMiner
-06_DeployHook.s.sol
-Calculate salt for 0x80... prefix
-Return salt value
-Deploy with CREATE2(bytecode, salt)
-Submit transaction
-Confirm deployment
-Initialize(poolManager, owner)
-Deployment complete
-Verify address starts with 0x80
+```mermaid
+sequenceDiagram
+    participant Script as DeployScript
+    participant Miner as HookMiner
+    participant Factory as CREATE2
+    participant Chain as Unichain
+
+    Script->>Miner: find(salt, creationCode, 0x80...)
+    Miner-->>Script: return salt
+    Script->>Factory: deploy(salt, bytecode)
+    Factory->>Chain: Create Contract
+    Chain-->>Script: Address (0x80...)
 ```
 
 **Sources:**[contracts/README.md105-122](https://github.com/HACK3R-CRYPTO/Aegis/blob/5ea5ecc2/contracts/README.md#L105-L122)
@@ -429,26 +292,13 @@ AegisHook is designed with gas efficiency in mind:
 - Minimal external calls during swap execution
 - Optimized for the critical path (beforeSwap)
 
-```
-Execution Paths
-
-Gas Costs
-
-SLOAD panicMode
-~2100 gas
-
-Boolean comparison
-~3 gas
-
-Revert operation
-~0 gas (refund)
-
-Return success
-~0 gas
-
-Normal: ~2103 gas
-
-Panic: ~2103 gas + revert
+```mermaid
+graph TD
+    Method[Gas Optimization]
+    Method --> SLOAD[SLOAD panicMode: 2100 gas]
+    Method --> Compare[Comparison: 3 gas]
+    Method --> Revert[Revert: 0 gas refund]
+    Method --> Return[Return: 0 gas]
 ```
 
 **Sources:**[contracts/README.md32-37](https://github.com/HACK3R-CRYPTO/Aegis/blob/5ea5ecc2/contracts/README.md#L32-L37)
@@ -484,41 +334,11 @@ The design eliminates the "Inversion of Control" problem typical of keeper-based
 
 ### External Libraries
 
-```
-Development Tools
-
-Uniswap v4 Stack
-
-AegisHook Dependencies
-
-implements
-
-inherits
-
-uses
-
-tested with
-
-builds on
-
-depends on
-
-AegisHook.sol
-
-v4-core
-IHooks, PoolManager
-
-v4-periphery
-Helper contracts
-
-uniswap-hooks
-OpenZeppelin base
-
-forge-std
-Testing framework
-
-hookmate
-Hook utilities
+```mermaid
+graph TD
+    Hook[AegisHook] -->|Inherits| IHooks
+    Hook -->|Uses| PoolManager
+    Hook -->|Uses| HooksLib
 ```
 
 **Sources:**[contracts/README.md1-6](https://github.com/HACK3R-CRYPTO/Aegis/blob/5ea5ecc2/contracts/README.md#L1-L6)
@@ -535,21 +355,15 @@ All dependencies are managed as Git submodules and pinned to specific commits fo
 
 AegisHook emits events to track critical state changes for off-chain monitoring and analytics:
 
-```
-Indexer
-Hook
-Sentinel
-Indexer
-Hook
-Sentinel
-Frontend dashboard updates
-Alert systems triggered
-setPanicMode(true)
-Update panicMode state
-Emit PanicModeChanged(true)
-setPanicMode(false)
-Update panicMode state
-Emit PanicModeChanged(false)
+```mermaid
+sequenceDiagram
+    participant Sentinel
+    participant Hook
+    participant OffChain as Indexer/Dashboard
+
+    Sentinel->>Hook: setPanicMode(true)
+    Hook->>OffChain: emit PanicModeChanged(true)
+    Note over OffChain: Update UI Alert
 ```
 
 **Sources:**[contracts/README.md32-37](https://github.com/HACK3R-CRYPTO/Aegis/blob/5ea5ecc2/contracts/README.md#L32-L37)

@@ -31,36 +31,27 @@ Sources: [contracts/README.md39-50](https://github.com/HACK3R-CRYPTO/Aegis/blob/
 
 ## System Position
 
-```
-Unichain Sepolia (L2)
-
-Reactive Network (Kopli)
-
-Ethereum Sepolia (L1)
-
-PriceUpdate(price)
-
-NewFeedback events
-
-setPanicMode(bool)
-
-boostReputation(address)
-
-Monitors: price < 1500
-
-Subscription via REACTIVE_VM
-
-MockOracle
-0x29f8...BA3b
-
-AegisGuardianRegistry
-ERC-721 + ERC-8004
-
-AegisSentinel
-0x0f76...b482
-
-AegisHook
-0xBaa0...2C080
+```mermaid
+graph TD
+    subgraph L1 [Ethereum Sepolia]
+        Oracle[MockOracle<br>0x29f8...BA3b]
+        Registry[AegisGuardianRegistry<br>ERC-721 + ERC-8004]
+    end
+    
+    subgraph Reactive [Reactive Network]
+        Sentinel[AegisSentinel<br>0x0f76...b482]
+    end
+    
+    subgraph L2 [Unichain Sepolia]
+        Hook[AegisHook<br>0xBaa0...2C080]
+    end
+    
+    Oracle -->|PriceUpdate| Sentinel
+    Registry -->|NewFeedback| Sentinel
+    Sentinel -->|setPanicMode| Hook
+    Sentinel -->|boostReputation| Hook
+    
+    Sentinel -.->|Monitors price < 1500| Oracle
 ```
 
 **Diagram: AegisSentinel Cross-Chain Communication Flow**
@@ -85,28 +76,21 @@ Sources: [contracts/broadcast/05_DeploySentinel.s.sol/5318007/run-latest.json9-1
 
 ### Event Subscription Model
 
-```
-MockOracle
-(Sepolia)
-REACTIVE_VM
-0x00...fffFfF
-AegisSentinel
-Deployer
-MockOracle
-(Sepolia)
-REACTIVE_VM
-0x00...fffFfF
-AegisSentinel
-Deployer
-Event Detection Phase
-"deploy(REACTIVE_VM, hook, oracle)"
-"constructor() sets addresses"
-"subscribe() [separate tx]"
-"subscribes to PriceUpdate topic"
-"monitors for PriceUpdate events"
-"emit PriceUpdate(1000)"
-"react() callback triggered"
-"check price < THRESHOLD"
+```mermaid
+sequenceDiagram
+    participant Deployer
+    participant Sentinel
+    participant VM as ReactiveVM
+    participant Oracle
+
+    Deployer->>Sentinel: deploy(VM, hook, oracle)
+    Deployer->>Sentinel: subscribe()
+    Sentinel->>VM: subscribe(topic, oracle)
+    
+    Note right of VM: Event Detection Phase
+    Oracle->>VM: emit PriceUpdate(1000)
+    VM->>Sentinel: react(1000)
+    Sentinel->>Sentinel: check price < THRESHOLD
 ```
 
 **Diagram: Sentinel Initialization and Subscription Flow**
@@ -133,42 +117,18 @@ The Sentinel implements threshold-based monitoring with the following logic:
 
 **Monitoring Flow:**
 
-```
-"Contract Deployed"
-
-"PriceUpdate event from L1"
-
-"Extract price from event"
-
-"price >= 1500"
-
-"price < 1500"
-
-"No action required"
-
-"Call setPanicMode(true)"
-
-"emit PriceThresholdBreached"
-
-"Execute L2 transaction"
-
-"Return to monitoring"
-
-Listening
-
-EventReceived
-
-EvaluatePrice
-
-PriceNormal
-
-PriceCrash
-
-TriggerPanic
-
-EmitEvent
-
-CrossChainCall
+```mermaid
+graph TD
+    Start[Contract Deployed] --> Listen[Listening for Events]
+    Listen -->|PriceUpdate| Extract[Extract Price]
+    Extract --> Check{Price < 1500?}
+    
+    Check -->|No| Listen
+    Check -->|Yes| Trigger[Trigger Panic]
+    
+    Trigger -->|emit| Event[PriceThresholdBreached]
+    Trigger -->|call| CrossChain[Execute L2 Transaction]
+    CrossChain --> Listen
 ```
 
 **Diagram: Price Threshold Evaluation State Machine**
@@ -187,40 +147,29 @@ The `AegisSentinel` contract inherits from and utilizes several Reactive Network
 
 **Inheritance Hierarchy:**
 
-```
-«abstract»
-
-ReactiveContract
-
-+react(chainId, sender, topic0, data)
-
-+vu()
-
-«abstract»
-
-AbstractReactive
-
-+REACTIVE_VM address
-
-+subscribe()
-
-AegisSentinel
-
--address hookAddress
-
--address oracleAddress
-
--uint256 PRICE_THRESHOLD
-
-+react() : override
-
-+setPanicMode(bool)
-
-+getHookAddress() : view
-
-+getOracleAddress() : view
-
-+getPriceThreshold() : view
+```mermaid
+classDiagram
+    class ReactiveContract {
+        +react(chainId, sender, topic0, data)
+        +vu()
+    }
+    class AbstractReactive {
+        +address REACTIVE_VM
+        +subscribe()
+    }
+    class AegisSentinel {
+        -address hookAddress
+        -address oracleAddress
+        -uint256 PRICE_THRESHOLD
+        +react()
+        +setPanicMode(bool)
+        +getHookAddress()
+        +getOracleAddress()
+        +getPriceThreshold()
+    }
+    
+    ReactiveContract <|-- AbstractReactive
+    AbstractReactive <|-- AegisSentinel
 ```
 
 **Diagram: AegisSentinel Class Structure**
@@ -251,34 +200,22 @@ Sources: [contracts/README.md33-37](https://github.com/HACK3R-CRYPTO/Aegis/blob/
 
 The Sentinel uses the Reactive Network's cross-chain messaging system to communicate with contracts on destination chains:
 
-```
-AegisHook
-(Unichain L2)
-AegisSentinel
-(Kopli)
-Reactive VM
-(Kopli)
-MockOracle
-(Sepolia L1)
-AegisHook
-(Unichain L2)
-AegisSentinel
-(Kopli)
-Reactive VM
-(Kopli)
-MockOracle
-(Sepolia L1)
-Normal Market Conditions
-Market Crash Event
-"emit PriceUpdate(3000)"
-"react(chainId, sender, topic0, data)"
-"if (3000 >= 1500) { skip }"
-"emit PriceUpdate(1000)"
-"react(..., 1000)"
-"if (1000 < 1500) { trigger }"
-"setPanicMode(true) via cross-chain call"
-"panicMode = true"
-"emit PriceThresholdBreached(1000)"
+```mermaid
+sequenceDiagram
+    participant Oracle as MockOracle (L1)
+    participant VM as Reactive VM
+    participant Sentinel as AegisSentinel
+    participant Hook as AegisHook (L2)
+
+    Note over Oracle: Market Crash Event
+    Oracle->>VM: emit PriceUpdate(1000)
+    VM->>Sentinel: react(chainId, sender, topic, 1000)
+    
+    Sentinel->>Sentinel: check 1000 < 1500
+    Sentinel->>Hook: setPanicMode(true)
+    
+    Note over Hook: panicMode = true
+    Sentinel->>Sentinel: emit PriceThresholdBreached(1000)
 ```
 
 **Diagram: Cross-Chain Circuit Breaker Activation Sequence**
@@ -295,24 +232,14 @@ The Sentinel must subscribe to events from the L1 oracle before it can react to 
 
 **Subscription Parameters:**
 
-```
-subscribe()
-
-chain_id: 11155111
-
-contract: 0x29f8...BA3b
-
-topic: keccak256('PriceUpdate(uint256)')
-
-future events
-
-triggers react()
-
-AegisSentinel
-
-REACTIVE_VM
-
-MockOracle
+```mermaid
+graph LR
+    Sentinel[AegisSentinel] -->|subscribe| VM[REACTIVE_VM]
+    VM -.->|listens to| Oracle[MockOracle]
+    
+    note[Subscription Params:<br>Chain: 11155111<br>Contract: 0x29f8...<br>Topic: PriceUpdate]
+    
+    Sentinel --- note
 ```
 
 **Diagram: Event Subscription Registration**
@@ -360,28 +287,17 @@ The Sentinel also monitors the `AegisGuardianRegistry` contract for feedback eve
 
 **Integration Flow:**
 
-```
-recordIntervention()
+```mermaid
+sequenceDiagram
+    participant Guardian
+    participant Registry as AegisGuardianRegistry (L1)
+    participant Sentinel as AegisSentinel (Reactive)
+    participant Hook as AegisHook (L2)
 
-emit NewFeedback()
-
-listen to feedback
-
-boostReputation(guardian)
-
-update VIP status
-
-Guardian
-(Human/Bot)
-
-AegisGuardianRegistry
-(Sepolia)
-
-AegisSentinel
-(Reactive)
-
-AegisHook
-(Unichain)
+    Guardian->>Registry: recordIntervention()
+    Registry->>Sentinel: emit NewFeedback()
+    Sentinel->>Hook: boostReputation(guardian)
+    Hook->>Hook: Update VIP Status
 ```
 
 **Diagram: Reputation Feedback Loop**
@@ -443,19 +359,14 @@ The Sentinel implements multiple layers of access control to ensure secure opera
 
 Certain functions can only be called by the Reactive VM:
 
-```
-react() - REVERTS
-
-react() - ALLOWED
-
-require(msg.sender == REACTIVE_VM)
-
-External Caller
-
-AegisSentinel
-
-REACTIVE_VM
-0x00...fffFfF
+```mermaid
+graph TD
+    Caller[External Caller] -->|react()| Sentinel[AegisSentinel]
+    VM[REACTIVE_VM] -->|react()| Sentinel
+    
+    Sentinel -->|Check msg.sender| Check{Is Sender VM?}
+    Check -->|Yes| Allow[Execute Logic]
+    Check -->|No| Revert[Revert Transaction]
 ```
 
 **Diagram: VM-Only Access Control**

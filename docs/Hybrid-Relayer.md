@@ -32,37 +32,31 @@ The Hybrid Relayer operates as a fallback component in the Aegis cross-chain arc
 
 ### Dual-Path Architecture
 
-```
-Unichain Sepolia (L2)
-
-Off-Chain Infrastructure
-
-Reactive Network (Kopli)
-
-Ethereum Sepolia (L1)
-
-PriceUpdate Events
-
-Direct Monitoring
-(Fallback)
-
-setPanicMode
-(Primary Path)
-
-setPanicMode
-(Backup Path)
-
-MockOracle
-0x29f8...BA3b
-
-AegisSentinel
-0x0f76...b482
-
-relay.ts
-Hybrid Relayer
-
-AegisHook
-0xBaa0...2C080
+```mermaid
+graph TD
+    subgraph L1 [Ethereum Sepolia]
+        Oracle[MockOracle]
+    end
+    
+    subgraph Reactive [Reactive Network]
+        Sentinel[AegisSentinel]
+    end
+    
+    subgraph OffChain [Off-Chain]
+        Relayer[Hybrid Relayer<br>relay.ts]
+    end
+    
+    subgraph L2 [Unichain Sepolia]
+        Hook[AegisHook]
+    end
+    
+    Oracle -->|PriceUpdate| Sentinel
+    Sentinel -->|Primary Path| Hook
+    
+    Oracle -.->|Direct Monitor| Relayer
+    Relayer -.->|Backup Path| Hook
+    
+    linkStyle 2,3 stroke-dasharray: 5 5
 ```
 
 **Diagram: Hybrid Relayer in System Context**
@@ -106,38 +100,26 @@ This provides an emergency pathway to trigger circuit breaker activation even if
 
 ### Relationship to Reactive Sentinel
 
-```
-"AegisHook
-(Unichain)"
-"relay.ts
-(Off-chain)"
-"AegisSentinel
-(Reactive)"
-"MockOracle
-(Sepolia)"
-"AegisHook
-(Unichain)"
-"relay.ts
-(Off-chain)"
-"AegisSentinel
-(Reactive)"
-"MockOracle
-(Sepolia)"
-Price crashes
-Panic activated
-Panic activated via fallback
-alt
-[Primary Path Works]
-[Primary Path Delayed]
-"setPrice(lowValue)"
-"emit PriceUpdate"
-"Event detected via RPC"
-"setPanicMode(true)"
-"Detects panic already set
-No action needed"
-"Message stuck/delayed"
-"Timeout exceeded"
-"setPanicMode(true)"
+```mermaid
+sequenceDiagram
+    participant Oracle
+    participant Sentinel
+    participant Relayer
+    participant Hook
+
+    Oracle->>Oracle: Price Crash
+    par Primary Path
+        Oracle->>Sentinel: emit PriceUpdate
+        Sentinel->>Hook: setPanicMode(true)
+    and Backup Path
+        Oracle->>Relayer: Event detected via RPC
+        Relayer->>Relayer: Wait for Timeout
+        alt Panic Not Set
+            Relayer->>Hook: setPanicMode(true)
+        else Panic Already Set
+            Relayer->>Relayer: No action needed
+        end
+    end
 ```
 
 **Diagram: Relayer Activation Logic**
@@ -193,46 +175,24 @@ This command starts the relayer in the background, allowing it to monitor events
 
 ### Execution Flow
 
-```
-No
-
-Yes
-
-Yes
-
-No
-
-Yes
-
-No
-
-Start relay.ts
-
-Initialize Web3 connections
-to Sepolia and Unichain
-
-Subscribe to PriceUpdate events
-on MockOracle
-
-Monitor events
-
-Price below
-threshold?
-
-Is panicMode
-already true on Hook?
-
-Wait for timeout period
-
-panicMode
-activated?
-
-Call Hook.setPanicMode(true)
-on Unichain
-
-Log emergency trigger
-
-Continue monitoring
+```mermaid
+flowchart TD
+    Start[Start relay.ts] --> Init[Init Web3 Connections]
+    Init --> Sub[Subscribe/Poll Oracle]
+    Sub --> CheckPrice{Price < Threshold?}
+    
+    CheckPrice -->|No| Sub
+    CheckPrice -->|Yes| CheckHook{Panic Mode Active?}
+    
+    CheckHook -->|Yes| Log[Log Info]
+    CheckHook -->|No| Wait[Wait Timeout]
+    
+    Wait --> CheckHook2{Panic Mode Active?}
+    CheckHook2 -->|Yes| Log
+    CheckHook2 -->|No| Trigger[Call setPanicMode(true)]
+    
+    Trigger --> Log
+    Log --> Sub
 ```
 
 **Diagram: Relayer Execution Flow**
@@ -290,41 +250,25 @@ These concerns are acceptable for testnet demonstrations but would be unacceptab
 
 ## Relationship to System Architecture
 
-```
-Testnet Architecture
-(Current)
-
-Production Architecture
-(Mainnet)
-
-References
-
-References
-
-Chainlink Oracle
-
-AegisSentinel
-(Reactive Network)
-
-AegisHook
-(Unichain)
-
-MockOracle
-
-AegisSentinel
-(Reactive Network)
-
-relay.ts
-(Hybrid Relayer)
-
-AegisHook
-(Unichain)
-
-Primary Path:
-Autonomous, trustless
-
-Backup Path:
-Centralized, temporary
+```mermaid
+graph TD
+    subgraph Testnet [Current Testnet Arch]
+        T_Oracle[MockOracle]
+        T_Sentinel[AegisSentinel]
+        T_Relayer[Hybrid Relayer]
+        T_Hook[AegisHook]
+        
+        T_Oracle --> T_Sentinel --> T_Hook
+        T_Oracle -.-> T_Relayer -.-> T_Hook
+    end
+    
+    subgraph Mainnet [Production Arch]
+        M_Oracle[Chainlink Oracle]
+        M_Sentinel[AegisSentinel]
+        M_Hook[AegisHook]
+        
+        M_Oracle --> M_Sentinel --> M_Hook
+    end
 ```
 
 **Diagram: Production vs Testnet Architecture**
