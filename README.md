@@ -1,148 +1,255 @@
-# Aegis 🛡️
+# Aegis: Autonomous Liquidity Defense
 
-**The First Cross-Chain Circuit Breaker for Uniswap v4 Liquidity.**
+## Purpose and Scope
 
-> 🏆 **Uniswap Hook Incubator (UHI) Hackathon Entry**
-> 🛡️ **ERC-8004 (Trustless Agents) Compatible**
->
-> 🎥 **Demo Video**: [Link to Video] (Add later)
-> 🔗 **Live Deployment**: [Unichain Sepolia Link] (Add later)
+This document provides a high-level introduction to the Aegis cross-chain circuit breaker system. It explains the problem Aegis solves, introduces the core smart contracts and their roles, and describes the cross-chain architecture that enables automated liquidity protection on Uniswap v4.
 
----
+For detailed architectural patterns and design decisions, see [System Architecture](./docs/System-Architecture.md). For individual contract specifications, see [Core Smart Contracts](./docs/Core-Smart-Contracts.md). For deployment procedures and network configuration, see [Deployment](./docs/Deployment.md).
 
-## 💡 Inspiration
-Liquidity Providers (LPs) on Layer 2s are bleeding money. The problem is **Loss Versus Rebalancing (LVR)**.
-When Ethereum Mainnet prices crash, arbitrage bots race to L2s to trade against stale pools before they update. This "toxic flow" costs LPs hundreds of millions annually. We wanted to build a **"Shield"** that uses the speed of **Unichain** to protect LPs from this predation.
+## � Documentation Portal
 
-## 🚀 What it Does
-Aegis is an autonomous security system for your liquidity.
-1.  **Watches**: It uses **Reactive Network** to monitor volatility on Ethereum Mainnet 24/7.
-2.  **Analyzes**: If it detects a crash (e.g., ETH drops >5% in 5 mins), it triggers a "Panic" signal.
-3.  **Protects**: The **Unichain Hook** instantly gates the pool. Swaps are rejected. LPs are safe.
-4.  **Resumes**: Once volatility settles, trading re-opens automatically.
+Detailed technical documentation is organized in the [docs/](./docs/) directory:
 
-## 🛡️ Aegis: The Agentic Shield
-Aegis has evolved from a simple circuit breaker into an intelligent, reputation-aware defense system.
-
-### Key Features
-1.  **Identity Registry (ERC-721)**: Guardians mint a unique NFT Profile (`AegisGuardian`) to build their on-chain identity.
-2.  **Reputation Engine (ERC-8004)**: 
-    - **Heroic Interventions**: When an agent provides liquidity during a crash, recent **Reactive Sentinel** logic automatically boosts their reputation.
-    - **VIP Lane**: Trusted agents (Rep > 90) pay **0.01%** fees even during panic mode.
-3.  **Autonomous Sync**: The **Reactive Sentinel** listens to `NewFeedback` events on the Registry and auto-syncs reputation to the L2 Hook. No centralized servers required.
+- **[🚀 Development Guide](./docs/Development-Guide.md)**: Environment setup and quickstart.
+- **[🏗️ System Architecture](./docs/System-Architecture.md)**: Deep dive into the Reactive Network design.
+- **[📜 Core Smart Contracts](./docs/Core-Smart-Contracts.md)**: Analysis of Hook, Sentinel, and Oracle logic.
+- **[🛡️ Guardian Registry](./docs/Guardian-Registry.md)**: ERC-8004 Identity and Reputation system.
+- **[🎮 Frontend Dashboard](./docs/Frontend-Dashboard.md)**: React UI, glassmorphism, and real-time updates.
+- **[🌉 Hybrid Relayer](./docs/Hybrid-Relayer.md)**: The cross-chain bridge between Sepolia and Unichain.
+- **[� Project Structure](./docs/Project-Structure.md)**: Monorepo organization and file layout.
 
 ---
 
-## ⚙️ How We Built It
-We combined three cutting-edge technologies to make this possible:
+## Problem Statement: Loss Versus Rebalancing (LVR)
 
-### 1. Uniswap v4 Hooks (The Shield)
-We built a custom hook (`AegisHook.sol`) that implements a `beforeSwap` gate.
-*   **Feature**: `panicMode`. When active, all trades revert.
-*   **Why v4?**: Only v4 allows programmatic "pausing" of specific pools without centralization.
+Liquidity Providers on Layer 2 exchanges suffer from Loss Versus Rebalancing (LVR), a form of adverse selection where arbitrage bots exploit stale pool prices during market volatility. When Ethereum mainnet experiences a price crash, arbitrageurs race to L2 chains to trade against Automated Market Maker (AMM) pools before price oracles update, extracting value from LPs through what is known as "toxic flow."
 
-### 2. Reactive Network (The Eyes)
-We deployed a Reactive Smart Contract (`AegisSentinel.sol`) that listens to cross-chain events.
-*   **Integration**: It subscribes to Chainlink Oracle events on Sepolia and triggers a callback on Unichain.
-*   **Why Reactive?**: It solves the "Inversion of Control" problem. We don't need to run a python bot server. The contract runs itself.
+Aegis addresses this by implementing an autonomous circuit breaker that:
 
-### 3. Unichain (The Speed)
-We deployed on **Unichain Testnet** to leverage **Flashblocks**.
-*   **Why Unichain?**: To beat arbitrage bots, we need sub-second 250ms block times. Unichain gives us the speed advantage to "front-run the front-runners."
+1. Monitors price volatility on Ethereum Sepolia (L1) via oracle events
+2. Detects crash conditions (e.g., >50% price drop) using the Reactive Network
+3. Instantly gates Uniswap v4 pools on Unichain Sepolia (L2) to prevent exploitation
+4. Resumes trading automatically when volatility subsides
+
+This architecture leverages Unichain's 250ms Flashblocks to "front-run the front-runners," closing the temporal arbitrage window before toxic flow can drain LP positions.
 
 ---
 
-## 🏗️ Architecture
+## System Components
+
+Aegis consists of four core smart contracts deployed across three blockchain networks:
+
+| Contract | File | Network | Role |
+| --- | --- | --- | --- |
+| `MockOracle` | `contracts/src/MockOracle.sol` | Ethereum Sepolia | Price feed source; emits `PriceUpdate` events |
+| `AegisSentinel` | `contracts/src/AegisSentinel.sol` | Reactive Lasna | Event listener; triggers cross-chain actions |
+| `AegisHook` | `contracts/src/AegisHook.sol` | Unichain Sepolia | Uniswap v4 hook; gates swaps via `beforeSwap` |
+| `AegisGuardianRegistry` | `contracts/src/AegisGuardianRegistry.sol` | Ethereum Sepolia | ERC-721 + ERC-8004 identity and reputation registry |
+
+### Component Architecture Diagram
+
+```mermaid
+flowchart TD
+    User([User/Trader])
+    Hook[AegisHook (Unichain)]
+    Sentinel[AegisSentinel (Reactive)]
+    Oracle[MockOracle (Sepolia)]
+
+    User -->|Swap| Hook
+    Oracle -->|PriceUpdate| Sentinel
+    Sentinel -->|setPanicMode| Hook
+```
+
+---
+
+## Core Workflow: Circuit Breaker Activation
+
+The following sequence demonstrates how Aegis responds to a market crash event:
+
+### Cross-Chain Message Flow
+
 ```mermaid
 sequenceDiagram
-    participant Mainnet as 🔴 Ethereum Mainnet
-    participant Registry as 📜 Guardian Registry (8004)
-    participant Sentinel as 🟣 Aegis Sentinel (Reactive)
-    participant Hook as 🔵 Aegis Hook (Unichain)
-    
-    Note over Mainnet: 🚨 CRASH EVENT DETECTED
-    Sentinel->>Mainnet: Reads Oracle Data
-    Sentinel->>Hook: [Cross-Chain] SET_PANIC(true)
-    Note over Hook: 🔒 POOL LOCKED
-    
-    Note over Hook: 🦸 HERO SAVES DAY
-    Guardian->>Hook: Swaps into Volatility
-    Hook->>Registry: [Cross-Chain] Record Intervention (Feedback)
-    
-    Registry->>Sentinel: Emit NewFeedback(Volume)
-    Sentinel->>Hook: [Cross-Chain] BOOST_REP(Guardian)
-    Note over Hook: 🌟 GUARDIAN PROMOTED TO VIP
+    participant User as User/Trader
+    participant Hook as AegisHook (Unichain)
+    participant Sentinel as AegisSentinel (Reactive)
+    participant Oracle as MockOracle (Sepolia)
+
+    Note over Oracle: Initial state: price = 3000
+    Oracle->>Oracle: setPrice(1000)
+    Oracle->>Sentinel: emit PriceUpdate(1000)
+    Note over Sentinel: Detect: 1000 < THRESHOLD(1500)
+    Sentinel->>Hook: abi.encodeWithSignature setPanicMode(true)
+    Note over Hook: State: CIRCUIT_BREAKER_ACTIVE
+    User->>Hook: beforeSwap()
+    Hook-->>User: revert PoolPaused()
+    Note over Hook: All swaps blocked until setPanicMode(false) called
 ```
 
-## 🛠️ Challenges We Ran Into
-*   **Reactive SDK Integration**: The Reactive Network SDK underwent recent changes. We had to dig into the `node_modules` to find the correct import path for `AbstractReactive`.
-*   **Cross-Chain Checksums**: Foundry's deployment scripts are extremely strict about address checksums. We generated valid Deployer addresses for Unichain and Reactive, but the compiler rejected them until we applied strict EIP-55 formatting dynamically.
-*   **Hook Mining**: Calculating the correct salt to get the `BEFORE_SWAP` flag (0x80...) required writing a custom `HookMiner` script.
-*   **Infrastructure Gaps**: Reactive Network is an amazing technology, but public testnet relayers for **Unichain Sepolia** (Chain ID 1301) were not fully stable during the hackathon. 
-    *   **The Issue**: The `Sentinel` contract on Reactive Network correctly detected events on Sepolia, but the message sometimes got "stuck" because the public relayer node wasn't forwarding it to Unichain fast enough.
-    *   **The Solution**: We built a **Hybrid Relayer** (`relay.ts`) to bridge the gap. It monitors the Oracle directly as a fallback to ensure the demo works seamlessly despite testnet latency.
-    *   **Deep Dive**: Read [Why We Built a Custom Relayer](RELAYER_EXPLAINED.md) for the full architectural decision.
+### Key Functions and Events
 
-## 🔮 What's Next for Aegis
-*   **Guardian Registry**: 
-    - Gamified leaderboard tracking `totalStabilizedVolume` and `responseLatency`.
-    - Guardians compete to be the most effective defender.
-*   **Granular Protection**: Instead of pausing the whole pool, we plan to implement "Dynamic Spreads" (widen fees during volatility).
-*   **Real-World Assets**: Protecting Tokenized Real Estate pools from depeg events.
+| Component | Function/Event | Purpose |
+| --- | --- | --- |
+| `MockOracle` | `setPrice(uint256 newPrice)` | Simulates price update; emits `PriceUpdate` |
+| `MockOracle` | `event PriceUpdate(uint256 price, uint256 timestamp)` | Signals price change to Sentinel |
+| `AegisSentinel` | `react(...)` | Callback invoked by Reactive Network; checks threshold |
+| `AegisSentinel` | Cross-chain call to `setPanicMode(bool)` | Activates/deactivates circuit breaker on L2 |
+| `AegisHook` | `beforeSwap(...)` | Intercepts swap attempts; reverts if `panicMode == true` |
+| `AegisHook` | `error PoolPaused()` | Revert reason when circuit breaker active |
 
 ---
 
-##  Documentation
-[Contracts README](contracts/README.md): Smart contract setup, deployment, and testing details.
+## Key Features
 
-[Frontend README](frontend/README.md): Dashboard setup and feature documentation.
+### 1. Autonomous Event-Driven Architecture
 
-[Reactive README](reactive/README.md): Reactive Network listener usage and configuration.
+Aegis eliminates the need for centralized keeper bots by leveraging the Reactive Network's inversion-of-control model. The `AegisSentinel` contract subscribes to L1 events and autonomously triggers L2 state changes without external coordination.
+
+- **Subscribe**: Sentinel registers for `PriceUpdate` events on Sepolia
+- **React**: Reactive Network invokes `react()` callback when event matches
+- **Execute**: Sentinel sends cross-chain message to Unichain via Reactive Network bridge
+
+### 2. Reputation-Aware Gating (ERC-8004)
+
+The system implements a trust layer using ERC-8004 (Trustless Agents) and ERC-721 for Guardian identity management:
+
+- **Identity**: Guardians mint an `AegisGuardian` NFT to establish on-chain identity
+- **Heroic Interventions**: When agents provide liquidity during panic mode, `AegisHook` records intervention volume
+- **Reputation Sync**: Sentinel listens to `NewFeedback` events and calls `boostReputation()` on L2
+- **VIP Lane**: Guardians with reputation > 90 pay reduced fees (0.01%) even during panic
+
+### 3. Hybrid Relayer Fallback
+
+To ensure message delivery reliability during testnet instability, Aegis includes a fallback relay mechanism:
+
+- **Primary**: Reactive Network's public relayer handles cross-chain message forwarding
+- **Fallback**: Custom TypeScript relayer (`relay.ts`) monitors Oracle directly and forwards messages if public relayer experiences delays
+- **Implementation**: See [Hybrid Relayer](./docs/Hybrid-Relayer.md) for details
 
 ---
 
-## 💻 Quick Start
+## Technology Stack
+
+### Protocol Integrations
+
+| Technology | Version/Chain | Purpose |
+| --- | --- | --- |
+| **Uniswap v4** | Hooks Framework | Provides `beforeSwap` gate mechanism via BaseHook interface |
+| **Reactive Network** | Lasna Testnet | Event-driven cross-chain orchestration; AbstractReactive base |
+| **Unichain** | Sepolia Testnet | 250ms Flashblocks enable sub-second circuit breaker activation |
+| **Foundry** | Latest | Smart contract development, testing, and deployment framework |
+
+### Development Dependencies
+
+The project uses git submodules for external libraries:
+
+- `lib/forge-std`: Foundry standard library for testing utilities
+- `lib/uniswap-hooks`: OpenZeppelin's Uniswap v4 hook implementation templates
+- `lib/hookmate`: Hook utility functions (e.g., salt mining for permissions)
+- `lib/system-smart-contracts`: Reactive Network core contracts (`AbstractReactive`)
+
+For dependency management details, see [Dependencies and Submodules](./docs/Dependencies-and-Submodules.md).
+
+---
+
+## Repository Structure
+
+```
+aegis/
+├── contracts/               # Foundry project
+│   ├── src/                 # Smart contract source files
+│   │   ├── AegisHook.sol           # Uniswap v4 hook (L2)
+│   │   ├── AegisSentinel.sol       # Reactive listener (Reactive)
+│   │   ├── MockOracle.sol          # Price feed simulator (L1)
+│   │   └── AegisGuardianRegistry.sol  # Identity & reputation (L1)
+│   ├── script/              # Deployment scripts
+│   │   ├── 04_DeployOracle.s.sol   # Deploy to Sepolia
+│   │   ├── 05_DeploySentinel.s.sol # Deploy to Reactive
+│   │   └── 06_DeployHook.s.sol     # Deploy to Unichain
+│   ├── test/                # Test suites
+│   ├── lib/                 # Git submodules (dependencies)
+│   ├── foundry.toml         # Foundry configuration
+│   └── broadcast/           # Deployment transaction logs
+├── frontend/                # Next.js dashboard
+│   └── src/                 # Frontend source code
+└── README.md                # Project documentation
+```
+
+For detailed directory structure and file organization, see [Project Structure](./docs/Project-Structure.md).
+
+---
+
+## Quick Start
+
+### Prerequisites
+
+- Foundry installed (`curl -L https://foundry.paradigm.xyz | bash`)
+- Node.js v18+ and npm
+
+### Testing Locally
+
 ```bash
-# 2. Test Contracts
-git clone https://github.com/ogazboiz/aegis.git
-cd aegis/contracts
+# Clone repository
+git clone https://github.com/HACK3R-CRYPTO/Aegis.git
+cd Aegis/contracts
+
+# Install dependencies (submodules)
 forge install
+
+# Run test suite
 forge test
 
-# 3. Run Dashboard (Frontend)
-cd ../frontend
-npm install
-
-# Start the Relayer (Background)
-npm run relay &
-
-# Start the UI
-npm run dev
-# Open http://localhost:3000
+# Run circuit breaker integration test
+forge test --match-contract AegisIntegrationTest -vv
 ```
 
-## 📜 Deployed & Verified
+### Running Dashboard
 
-We proved the logic with **Integration Tests** and a **Live Demo**.
+```bash
+cd frontend
+npm install
 
-### ✅ Security Verification (Forge)
-| Test Case | Scenario | Status |
-| :--- | :--- | :--- |
-| **Oracle Update** | Updates `MockOracle` price on L1 | ✅ PASS |
-| **Access Control** | Confirms only Sentinel can call Hook | ✅ PASS |
-| **Panic Trigger** | Triggers `setPanicMode(true)` on L2 | ✅ PASS |
-| **Circuit Breaker** | **REVERTS** v4 swaps when Panic is active | ✅ PASS |
+# Start hybrid relayer (background)
+npm run relay &
 
-See our [Verification Guide](walkthrough.md) for a step-by-step reproduction of the system flow.
+# Start Next.js dashboard
+npm run dev
+# Navigate to http://localhost:3000
+```
 
-| Network | Contract | Address |
-| :--- | :--- | :--- |
-| **Ethereum Sepolia** | MockOracle | `0x1392C38921A818cEdb100cC3767e8f30deC3a7D8` |
-| **Unichain Sepolia** | AegisHook | `0x1E2aE114cF3B63779A1367eD704ccA51a0218080` |
-| **Reactive Lasna** | AegisSentinel | `0x0B6ae13119Fc3b61d6ABb115342A1A075e14b6B6` |
-
-## 👥 Team
-*   **Ogazboiz** - Full Stack Developer
+For detailed deployment to testnets, see [Deployment Scripts](./docs/Deployment-Scripts.md).
 
 ---
-*Built with ❤️ for the Uniswap Hook Incubator.*
+
+## Design Philosophy: Simulation vs. Production
+
+The current implementation uses `MockOracle` for deterministic testing and demonstration purposes. This design choice enables:
+
+1. **Controlled Testing**: Simulate 50% market crash events on-demand via `setPrice(1000)`
+2. **Demo Reliability**: Guarantee circuit breaker activation during presentations without waiting for real market volatility
+3. **Interface Agnostic**: `AegisSentinel` listens for standard `PriceUpdate(uint256, uint256)` event signature; production deployment simply swaps `MockOracle` address for Chainlink Oracle address with zero code changes
+
+---
+
+## Verification and Testing
+
+Aegis includes comprehensive integration tests that verify the complete cross-chain flow:
+
+| Test Case | Validation | Status |
+| --- | --- | --- |
+| Oracle Update | `MockOracle.setPrice()` emits `PriceUpdate` event | ✅ PASS |
+| Access Control | Only `AegisSentinel` can call `AegisHook.setPanicMode()` | ✅ PASS |
+| Panic Trigger | Sentinel successfully calls `setPanicMode(true)` cross-chain | ✅ PASS |
+| Circuit Breaker | `AegisHook.beforeSwap()` reverts with `PoolPaused()` when active | ✅ PASS |
+
+For step-by-step verification walkthrough, see [walkthrough.md](./walkthrough.md).
+
+---
+
+## Next Steps
+
+- For detailed architectural patterns including cross-chain design and circuit breaker mechanics, see [System Architecture](./docs/System-Architecture.md)
+- For contract-level specifications and function signatures, see [Core Smart Contracts](./docs/Core-Smart-Contracts.md)
+- For off-chain components including the hybrid relayer and dashboard, see [Supporting Components](./docs/Supporting-Components.md)
+- For deployment procedures and network configuration, see [Deployment](./docs/Deployment.md)
+- For development workflow and contributing guidelines, see [Development Guide](./docs/Development-Guide.md)
