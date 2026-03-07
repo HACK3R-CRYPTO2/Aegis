@@ -18,7 +18,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className={`${inter.variable} ${mono.variable} font-sans bg-black text-white antialiased`}>
+      <body className={`${inter.variable} ${mono.variable} font-sans antialiased selection:bg-purple-500/30`}>
         <Providers>{children}</Providers>
       </body>
     </html>

@@ -100,12 +100,12 @@ export function NetworkMonitor() {
     }, [price, panicMode])
 
     return (
-        <div className="bg-[#0f0f13] rounded-2xl border border-gray-800 overflow-hidden flex flex-col h-[300px]">
+        <div className="glass-card rounded-2xl border border-white/5 overflow-hidden flex flex-col h-full min-h-[300px]">
             {/* Header */}
-            <div className="bg-[#1a1a20] px-4 py-2 border-b border-gray-800 flex items-center justify-between">
+            <div className="bg-black/40 px-4 py-2 border-b border-white/5 flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                    <Terminal className="w-4 h-4 text-gray-400" />
-                    <span className="text-xs font-mono font-bold text-gray-400 uppercase tracking-widest">Live Network Activity</span>
+                    <Terminal className="w-4 h-4 text-neon-cyan/50" />
+                    <span className="text-[10px] font-cyber font-bold text-gray-400 uppercase tracking-widest">System Logs</span>
                 </div>
                 <div className="flex gap-1.5">
                     <div className="w-2.5 h-2.5 rounded-full bg-red-500/20 border border-red-500/50" />
@@ -115,31 +115,31 @@ export function NetworkMonitor() {
             </div>
 
             {/* Logs Area */}
-            <div className="flex-1 p-4 font-mono text-xs overflow-y-auto space-y-3 scrollbar-hide">
+            <div className="flex-1 p-4 font-mono text-xs overflow-y-auto space-y-3 scrollbar-hide bg-black/20">
                 {logs.length === 0 && (
-                    <div className="text-gray-600 text-center mt-20 italic">
+                    <div className="text-gray-600 text-center mt-20 italic font-mono text-[10px]">
                         Waiting for chain events...
                         <br />
-                        <span className="text-[10px] not-italic text-gray-700">(Signals from Sepolia, Reactive, Unichain)</span>
+                        <span className="text-gray-700">(Signals from Sepolia, Reactive, Unichain)</span>
                     </div>
                 )}
 
                 {logs.map((log) => (
-                    <div key={log.id} className="flex gap-3 animate-in fade-in slide-in-from-left-2 duration-300">
-                        <span className="text-gray-600 shrink-0 select-none">[{log.timestamp}]</span>
+                    <div key={log.id} className="flex gap-3 animate-in fade-in slide-in-from-left-2 duration-300 items-start">
+                        <span className="text-gray-600 shrink-0 select-none text-[10px] pt-0.5">[{log.timestamp}]</span>
 
                         {/* Chain Badge */}
-                        <div className={`shrink-0 h-fit px-1.5 rounded text-[10px] font-bold border ${log.chain === 'SEPOLIA' ? 'bg-blue-900/20 text-blue-400 border-blue-900/50' :
-                                log.chain === 'REACTIVE' ? 'bg-purple-900/20 text-purple-400 border-purple-900/50' :
-                                    'bg-pink-900/20 text-pink-400 border-pink-900/50'
+                        <div className={`shrink-0 h-fit px-1.5 py-0.5 rounded text-[9px] font-bold border ${log.chain === 'SEPOLIA' ? 'bg-blue-500/10 text-blue-400 border-blue-500/20' :
+                            log.chain === 'REACTIVE' ? 'bg-purple-500/10 text-purple-400 border-purple-500/20' :
+                                'bg-pink-500/10 text-pink-400 border-pink-500/20'
                             }`}>
                             {log.chain}
                         </div>
 
-                        <span className={`${log.type === 'danger' ? 'text-red-400 font-bold' :
-                                log.type === 'success' ? 'text-emerald-400 font-bold' :
-                                    log.type === 'warning' ? 'text-yellow-400' :
-                                        'text-gray-300'
+                        <span className={`text-[11px] leading-tight ${log.type === 'danger' ? 'text-red-400 font-bold' :
+                            log.type === 'success' ? 'text-emerald-400 font-bold' :
+                                log.type === 'warning' ? 'text-yellow-400' :
+                                    'text-gray-300'
                             }`}>
                             {log.message}
                         </span>
@@ -149,18 +149,18 @@ export function NetworkMonitor() {
             </div>
 
             {/* Status Bar */}
-            <div className="bg-[#131318] px-4 py-1.5 border-t border-gray-800 flex items-center gap-6 text-[10px] font-mono text-gray-500 uppercase tracking-widest">
+            <div className="bg-black/60 px-4 py-1.5 border-t border-white/5 flex items-center justify-between text-[9px] font-mono text-gray-500 uppercase tracking-widest">
                 <div className="flex items-center gap-1.5">
                     <Globe className="w-3 h-3 text-blue-500" />
-                    <span className="text-blue-500/80">Sepolia: Connected</span>
+                    <span className="text-blue-400/80">Sepolia</span>
                 </div>
                 <div className="flex items-center gap-1.5">
                     <Zap className="w-3 h-3 text-purple-500" />
-                    <span className="text-purple-500/80">Reactive: Listening</span>
+                    <span className="text-purple-400/80">Reactive</span>
                 </div>
                 <div className="flex items-center gap-1.5">
                     <ShieldCheck className="w-3 h-3 text-pink-500" />
-                    <span className="text-pink-500/80">Unichain: Active</span>
+                    <span className="text-pink-400/80">Unichain</span>
                 </div>
             </div>
         </div>
