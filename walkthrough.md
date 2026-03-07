@@ -9,7 +9,7 @@ The Aegis system is successfully deployed across 3 chains, forming a Reactive Ci
 
 | Component | Network | Address | Role |
 | :--- | :--- | :--- | :--- |
-| **MockOracle** | **Sepolia (L1)** | `0x29f8f8d2A00330F9683e73a926F61AE7E91cBA3b` | Simulates ETH price. Emits `PriceUpdate`. |
+| **MockOracle** | **Sepolia (L1)** | `0x1392C38921A818cEdb100cC3767e8f30deC3a7D8` | Simulates ETH price. Emits `PriceUpdate`. |
 | **AegisHook** | **Unichain Sepolia** | `0x1E2aE114cF3B63779A1367eD704ccA51a0218080` | Uniswap v4 Hook. Has `panicMode`. |
 | **AegisGuardianRegistry** | **Unichain Sepolia** | `0xaDdf307296EFC3720D3e38E72d2A417327161cDb` | ERC-8004 Registry + ERC-721 Identity. |
 | **AegisSentinel**| **Reactive Lasna** | `0x0B6ae13119Fc3b61d6ABb115342A1A075e14b6B6` | Listens to Oracle (L1) -> Calls Hook (L2). |

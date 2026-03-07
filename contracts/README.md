@@ -98,9 +98,9 @@ We have successfully deployed the system across 3 networks.
 
 | Contract | Network | Address | Description |
 | :--- | :--- | :--- | :--- |
-| **MockOracle** | Sepolia (L1) | `0x29f8f8d2A00330F9683e73a926F61AE7E91cBA3b` | Simulates ETH Price |
-| **AegisHook** | Unichain (L2) | `0xBaa0573e3BE4291b58083e717E9EF5051772C080` | v4 Hook (Panic Mode) |
-| **AegisSentinel** | Reactive Lasna | `0x0f764437ffBE1fcd0d0d276a164610422710B482` | Listener & Controller |
+| **MockOracle** | Sepolia (L1) | `0x1392C38921A818cEdb100cC3767e8f30deC3a7D8` | Simulates ETH Price |
+| **AegisHook** | Unichain (L2) | `0x1E2aE114cF3B63779A1367eD704ccA51a0218080` | v4 Hook (Panic Mode) |
+| **AegisSentinel** | Reactive Lasna | `0x0B6ae13119Fc3b61d6ABb115342A1A075e14b6B6` | Listener & Controller |
 
 **Deployment Commands Used:**
 
