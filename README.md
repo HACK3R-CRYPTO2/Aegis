@@ -50,10 +50,10 @@ Aegis consists of four core smart contracts deployed across three blockchain net
 
 ```mermaid
 flowchart TD
-    User([User/Trader])
-    Hook[AegisHook (Unichain)]
-    Sentinel[AegisSentinel (Reactive)]
-    Oracle[MockOracle (Sepolia)]
+    User(["User/Trader"])
+    Hook["AegisHook (Unichain)"]
+    Sentinel["AegisSentinel (Reactive)"]
+    Oracle["MockOracle (Sepolia)"]
 
     User -->|Swap| Hook
     Oracle -->|PriceUpdate| Sentinel
