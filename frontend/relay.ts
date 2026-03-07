@@ -8,7 +8,7 @@ const sepolia = defineChain({
     id: 11155111,
     name: 'Sepolia',
     nativeCurrency: { name: 'Sepolia Ether', symbol: 'ETH', decimals: 18 },
-    rpcUrls: { default: { http: ['https://ethereum-sepolia.publicnode.com'] } },
+    rpcUrls: { default: { http: [process.env.NEXT_PUBLIC_SEPOLIA_RPC || 'https://eth-sepolia.g.alchemy.com/v2/uHo7ICSBqpDRguF-DhjWWF72l-sPapYX'] } },
 })
 
 const unichainSepolia = defineChain({
