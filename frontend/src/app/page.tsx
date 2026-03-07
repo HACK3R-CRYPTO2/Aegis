@@ -3,6 +3,7 @@ import { OracleSim } from '../components/OracleSim'
 import { TradingView } from '../components/TradingView'
 import { NetworkMonitor } from '../components/NetworkMonitor'
 import { ConnectButton } from '../components/ConnectButton'
+import { ReputationDashboard } from '../components/ReputationDashboard'
 import { ShieldCheck } from 'lucide-react'
 
 export default function Home() {
@@ -54,6 +55,8 @@ export default function Home() {
               <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest">System Status</h3>
             </div>
             <StatusCard />
+
+            <ReputationDashboard />
 
             <div className="mt-8 mb-2 flex items-center gap-2">
               <div className="w-2 h-2 bg-purple-500 rounded-full" />

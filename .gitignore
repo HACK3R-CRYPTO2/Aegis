@@ -1,0 +1,26 @@
+# Environment
+.env
+.env.local
+.DS_Store
+
+# Dependencies
+node_modules/
+
+# Build
+dist/
+out/
+cache/
+artifacts/
+
+# Foundry
+contracts/out/
+contracts/cache/
+contracts/broadcast/
+
+# Frontend
+frontend/.next/
+frontend/out/
+
+
+*.md
+!README.md

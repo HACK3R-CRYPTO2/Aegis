@@ -49,6 +49,13 @@ This simulates the real world.
 *   **Role**: Acts as a Chainlink Oracle feed for testing.
 *   **Usage**: We call `setPrice(1000)` to simulate a 50% market crash, triggering the entire defense sequence.
 
+### 4. The Reputation Engine (ERC-8004)
+**`src/AegisGuardianRegistry.sol`**
+This is the Trust Layer.
+*   **Standard**: Implements **ERC-8004 (Trustless Agents)** + **ERC-721 (NFTs)**.
+*   **Role**: Stores "Heroic Interventions" as immutable feedback.
+*   **Integration**: The `Sentinel` listens to this registry to automatically promote effective agents on L2.
+
 ## 🧪 Design Decisions: Simulation vs. Production
 
 ### Why use a Mock Oracle?

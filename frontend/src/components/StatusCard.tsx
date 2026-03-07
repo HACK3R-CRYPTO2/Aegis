@@ -22,8 +22,8 @@ export function StatusCard() {
 
     return (
         <div className={`p-6 rounded-2xl border-2 transition-all duration-500 ${isPanic
-                ? 'bg-red-950/30 border-red-500 shadow-[0_0_50px_-12px_rgba(239,68,68,0.5)]'
-                : 'bg-emerald-950/30 border-emerald-500 shadow-[0_0_50px_-12px_rgba(16,185,129,0.5)]'
+            ? 'bg-red-950/30 border-red-500 shadow-[0_0_50px_-12px_rgba(239,68,68,0.5)]'
+            : 'bg-emerald-950/30 border-emerald-500 shadow-[0_0_50px_-12px_rgba(16,185,129,0.5)]'
             }`}>
             <div className="flex items-center justify-between mb-4">
                 <h2 className="text-2xl font-bold tracking-wider">AEGIS SENTINEL STATUS</h2>
@@ -37,7 +37,7 @@ export function StatusCard() {
             <div className="flex flex-col gap-2">
                 <div className="flex items-center gap-3">
                     <div className={`w-4 h-4 rounded-full ${isPanic ? 'bg-red-500 animate-ping' : 'bg-emerald-500'}`} />
-                    <span className={`text-3xl font-mono font-black ${isPanic ? 'text-red-500' : 'text-emerald-500'}`}>
+                    <span className={`text-3xl font-mono font-black ${isPanic ? 'text-red-500 animate-glitch' : 'text-emerald-500'}`}>
                         {isLoading ? "INITIALIZING..." : isPanic ? "PANIC MODE ACTIVE" : "SYSTEM NORMAL"}
                     </span>
                 </div>

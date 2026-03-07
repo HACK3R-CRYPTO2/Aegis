@@ -11,7 +11,12 @@ contract MockOracle {
 
     // --- Events ---
     // Reactive listens for THIS event.
-    event PriceUpdate(uint256 indexed newPrice, uint256 timestamp);
+    event PriceUpdate(
+        uint256 indexed newPrice,
+        uint256 timestamp,
+        address indexed updater
+    );
+    event ReputationUpdate(address indexed agent, uint256 score);
 
     constructor() {
         owner = msg.sender;
@@ -22,6 +27,11 @@ contract MockOracle {
     /// @dev Call this with a low value (e.g. 1000) to trigger the "Crash".
     function setPrice(uint256 _price) external {
         price = _price;
-        emit PriceUpdate(_price, block.timestamp);
+        emit PriceUpdate(_price, block.timestamp, msg.sender);
+    }
+
+    /// @notice Updates agent reputation.
+    function setReputation(address _agent, uint256 _score) external {
+        emit ReputationUpdate(_agent, _score);
     }
 }

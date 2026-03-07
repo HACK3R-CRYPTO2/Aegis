@@ -10,8 +10,9 @@ The Aegis system is successfully deployed across 3 chains, forming a Reactive Ci
 | Component | Network | Address | Role |
 | :--- | :--- | :--- | :--- |
 | **MockOracle** | **Sepolia (L1)** | `0x29f8f8d2A00330F9683e73a926F61AE7E91cBA3b` | Simulates ETH price. Emits `PriceUpdate`. |
-| **AegisHook** | **Unichain Sepolia** | `0xBaa0573e3BE4291b58083e717E9EF5051772C080` | Uniswap v4 Hook. Has `panicMode`. |
-| **AegisSentinel**| **Reactive Lasna** | `0x0f764437ffBE1fcd0d0d276a164610422710B482` | Listens to Oracle (L1) -> Calls Hook (L2). |
+| **AegisHook** | **Unichain Sepolia** | `0x1E2aE114cF3B63779A1367eD704ccA51a0218080` | Uniswap v4 Hook. Has `panicMode`. |
+| **AegisGuardianRegistry** | **Unichain Sepolia** | `0xaDdf307296EFC3720D3e38E72d2A417327161cDb` | ERC-8004 Registry + ERC-721 Identity. |
+| **AegisSentinel**| **Reactive Lasna** | `0x0B6ae13119Fc3b61d6ABb115342A1A075e14b6B6` | Listens to Oracle (L1) -> Calls Hook (L2). |
 
 ### Configuration Status
 - [x] **Subscription**: Sentinel is subscribed to `MockOracle` events on Sepolia (ID: 11155111).
@@ -56,7 +57,13 @@ Use this flow to demonstrate the project:
     - **StatusCard** will flip to **"PANIC MODE ACTIVE"** (Red/Pulsing).
     - **TradingView** will show a "TRADING HALTED" overlay.
 
-4.  **Reset**:
+3.  **Reset**:
     - Click **"STABILIZE"** on `OracleSim`.
     - Confirm transaction.
     - System returns to **"SYSTEM NORMAL"**.
+
+4.  **Agentic Defense (New!)**:
+    - Scroll to the **Guardian Reputation** dashboard.
+    - **Mint ID**: Type a name (e.g. `DefenderOne`) and click **"Mint"**.
+    - **Observe**: You now have a unique Agent ID and a "ROOKIE AGENT" badge.
+    - **Note**: In a real scenario, the Sentinel boosts your reputation after a successful intervention, upgrading you to **"VIP GUARDIAN"**.

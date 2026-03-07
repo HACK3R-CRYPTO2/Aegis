@@ -3,6 +3,7 @@
 **The First Cross-Chain Circuit Breaker for Uniswap v4 Liquidity.**
 
 > 🏆 **Uniswap Hook Incubator (UHI) Hackathon Entry**
+> 🛡️ **ERC-8004 (Trustless Agents) Compatible**
 >
 > 🎥 **Demo Video**: [Link to Video] (Add later)
 > 🔗 **Live Deployment**: [Unichain Sepolia Link] (Add later)
@@ -19,6 +20,18 @@ Aegis is an autonomous security system for your liquidity.
 2.  **Analyzes**: If it detects a crash (e.g., ETH drops >5% in 5 mins), it triggers a "Panic" signal.
 3.  **Protects**: The **Unichain Hook** instantly gates the pool. Swaps are rejected. LPs are safe.
 4.  **Resumes**: Once volatility settles, trading re-opens automatically.
+
+## 🛡️ Aegis: The Agentic Shield
+Aegis has evolved from a simple circuit breaker into an intelligent, reputation-aware defense system.
+
+### Key Features
+1.  **Identity Registry (ERC-721)**: Guardians mint a unique NFT Profile (`AegisGuardian`) to build their on-chain identity.
+2.  **Reputation Engine (ERC-8004)**: 
+    - **Heroic Interventions**: When an agent provides liquidity during a crash, recent **Reactive Sentinel** logic automatically boosts their reputation.
+    - **VIP Lane**: Trusted agents (Rep > 90) pay **0.01%** fees even during panic mode.
+3.  **Autonomous Sync**: The **Reactive Sentinel** listens to `NewFeedback` events on the Registry and auto-syncs reputation to the L2 Hook. No centralized servers required.
+
+---
 
 ## ⚙️ How We Built It
 We combined three cutting-edge technologies to make this possible:
@@ -43,6 +56,7 @@ We deployed on **Unichain Testnet** to leverage **Flashblocks**.
 ```mermaid
 sequenceDiagram
     participant Mainnet as 🔴 Ethereum Mainnet
+    participant Registry as 📜 Guardian Registry (8004)
     participant Sentinel as 🟣 Aegis Sentinel (Reactive)
     participant Hook as 🔵 Aegis Hook (Unichain)
     
@@ -50,9 +64,14 @@ sequenceDiagram
     Sentinel->>Mainnet: Reads Oracle Data
     Sentinel->>Hook: [Cross-Chain] SET_PANIC(true)
     Note over Hook: 🔒 POOL LOCKED
-    participant Bot as 🤖 Arb Bot
-    Bot->>Hook: Try to Sell Toxic Flow
-    Hook--XBot: REVERT: "Aegis: Pool Paused"
+    
+    Note over Hook: 🦸 HERO SAVES DAY
+    Guardian->>Hook: Swaps into Volatility
+    Hook->>Registry: [Cross-Chain] Record Intervention (Feedback)
+    
+    Registry->>Sentinel: Emit NewFeedback(Volume)
+    Sentinel->>Hook: [Cross-Chain] BOOST_REP(Guardian)
+    Note over Hook: 🌟 GUARDIAN PROMOTED TO VIP
 ```
 
 ## 🛠️ Challenges We Ran Into
@@ -65,6 +84,9 @@ sequenceDiagram
     *   **Deep Dive**: Read [Why We Built a Custom Relayer](RELAYER_EXPLAINED.md) for the full architectural decision.
 
 ## 🔮 What's Next for Aegis
+*   **Guardian Registry**: 
+    - Gamified leaderboard tracking `totalStabilizedVolume` and `responseLatency`.
+    - Guardians compete to be the most effective defender.
 *   **Granular Protection**: Instead of pausing the whole pool, we plan to implement "Dynamic Spreads" (widen fees during volatility).
 *   **Real-World Assets**: Protecting Tokenized Real Estate pools from depeg events.
 

@@ -6,7 +6,9 @@ import { DEPLOYED_ADDRESSES } from '../lib/addresses'
 import { sepolia } from '../lib/config'
 import { TrendingDown, TrendingUp, Activity } from 'lucide-react'
 import { formatEther } from 'viem'
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
+
+import confetti from 'canvas-confetti'
 
 export function OracleSim() {
     const { data: price, refetch } = useReadContract({
@@ -19,12 +21,24 @@ export function OracleSim() {
 
     const { writeContract, data: hash, isPending } = useWriteContract()
     const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({ hash })
+    const [lastAction, setLastAction] = useState<'crash' | 'stabilize' | null>(null)
 
     useEffect(() => {
-        if (isSuccess) refetch()
-    }, [isSuccess, refetch])
+        if (isSuccess) {
+            refetch()
+            if (lastAction === 'stabilize') {
+                confetti({
+                    particleCount: 100,
+                    spread: 70,
+                    origin: { y: 0.6 },
+                    colors: ['#10b981', '#34d399', '#059669'] // Green theme
+                })
+            }
+        }
+    }, [isSuccess, refetch, lastAction])
 
     const handleCrash = () => {
+        setLastAction('crash')
         writeContract({
             address: DEPLOYED_ADDRESSES.MOCK_ORACLE as `0x${string}`,
             abi: MOCK_ORACLE_ABI,
@@ -35,6 +49,7 @@ export function OracleSim() {
     }
 
     const handleStabilize = () => {
+        setLastAction('stabilize')
         writeContract({
             address: DEPLOYED_ADDRESSES.MOCK_ORACLE as `0x${string}`,
             abi: MOCK_ORACLE_ABI,
