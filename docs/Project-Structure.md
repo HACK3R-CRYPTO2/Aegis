@@ -1,116 +1,415 @@
 # Project Structure
+Relevant source files
+- [.gitignore](https://github.com/HACK3R-CRYPTO/Aegis/blob/5ea5ecc2/.gitignore)
+- [contracts/.gitignore](https://github.com/HACK3R-CRYPTO/Aegis/blob/5ea5ecc2/contracts/.gitignore)
+- [contracts/README.md](https://github.com/HACK3R-CRYPTO/Aegis/blob/5ea5ecc2/contracts/README.md)
 
-## Purpose and Scope
+This document describes the directory layout and organization of the Aegis repository. It explains what each directory contains, the purpose of key files, and how the monorepo structure separates frontend and smart contract development concerns.
 
-This document describes the physical organization of the Aegis repository, including directory layouts, file locations, and version control patterns. It covers the separation between source code, generated artifacts, dependencies, and configuration files.
+For information about installing required tools and dependencies, see [Prerequisites](/HACK3R-CRYPTO/Aegis/4.1-prerequisites). For details on managing Git submodules, see [Git Submodules](/HACK3R-CRYPTO/Aegis/4.3-git-submodules).
 
 ---
 
-## Repository Layout Overview
+## Monorepo Layout
 
-The Aegis repository is organized into three primary directories with supporting configuration at the root:
+Aegis uses a monorepo architecture that separates frontend and smart contract code into distinct top-level directories. This allows independent development workflows while maintaining a unified version control structure.
 
-```mermaid
-graph TD
-    Root[Aegis Repository Root]
-    Root --> Contracts[contracts/]
-    Root --> Frontend[frontend/]
-    Root --> Lib[lib/]
-    Root --> Config[Root configuration files]
+### Directory Tree
 
-    Contracts --> Src[src/]
-    Contracts --> Script[script/]
-    Contracts --> Test[test/]
-    Contracts --> Out[out/ (ignored)]
-    Contracts --> Cache[cache/ (ignored)]
-    Contracts --> Broadcast[broadcast/ (ignored)]
+```
+📦 Aegis/
 
-    Frontend --> App[src/]
-    Frontend --> NextBuild[.next/ (ignored)]
-    Frontend --> Static[out/ (ignored)]
+frontend/
+(Next.js Application)
 
-    Lib --> ForgeStd[forge-std/]
-    Lib --> Uniswap[uniswap-hooks/]
-    Lib --> Hookmate[hookmate/]
-    Lib --> Reactive[system-smart-contracts/]
+contracts/
+(Foundry Project)
 
-    Config --> GitIgnore[.gitignore]
-    Config --> FoundryToml[foundry.toml]
-    Config --> GitModules[.gitmodules]
+lib/
+(Git Submodules)
+
+.github/workflows/
+(CI/CD)
+
+Root Files
+(README, .gitignore, etc)
+
+app/
+(Next.js Routes)
+
+components/
+(React Components)
+
+public/
+(Static Assets)
+
+.next/
+(Build Output)
+
+out/
+(Static Export)
+
+src/
+(Solidity Contracts)
+
+script/
+(Deployment Scripts)
+
+test/
+(Test Files)
+
+out/
+(Compiled Artifacts)
+
+cache/
+(Build Cache)
+
+broadcast/
+(Deployment Logs)
+
+foundry.toml
+(Configuration)
+
+forge-std/
+(Testing Framework)
+
+uniswap-hooks/
+(Hook Base Contracts)
+
+hookmate/
+(Hook Utilities)
+
+system-smart-contracts/
+(Reactive Network)
+
+test.yml
+(Test Workflow)
 ```
 
+**Sources:**[.gitignore1-26](https://github.com/HACK3R-CRYPTO/Aegis/blob/5ea5ecc2/.gitignore#L1-L26)[contracts/.gitignore1-15](https://github.com/HACK3R-CRYPTO/Aegis/blob/5ea5ecc2/contracts/.gitignore#L1-L15)
+
 ---
 
-## Contracts Directory Structure (`contracts/`)
+## Contracts Directory
 
-The `contracts/` directory contains all Solidity smart contracts and follows the standard Foundry project layout:
+The `contracts/` directory contains all smart contract source code, deployment infrastructure, and testing logic. It is a complete Foundry project with standard directory conventions.
 
-### Source Contracts (`contracts/src/`)
+### Contracts Directory Structure
 
-Contains the deployable smart contracts that implement the Aegis system:
+```
+broadcast/ (Logs)
 
-| Contract File | Purpose | Deployment Target |
-| :--- | :--- | :--- |
-| `AegisHook.sol` | Uniswap v4 hook implementing circuit breaker | Unichain Sepolia (L2) |
-| `AegisSentinel.sol` | Reactive Network orchestrator | Reactive Network (Lasna) |
-| `MockOracle.sol` | Test oracle for price feeds | Ethereum Sepolia (L1) |
-| `AegisGuardianRegistry.sol` | ERC-721 reputation system | Ethereum Sepolia (L1) |
+script/ (Deployment)
+
+src/ (Source Code)
+
+contracts/
+
+src/
+
+script/
+
+test/
+
+out/
+
+cache/
+
+broadcast/
+
+foundry.toml
+
+AegisHook.sol
+(Unichain L2)
+
+AegisSentinel.sol
+(Reactive Network)
+
+MockOracle.sol
+(Sepolia L1)
+
+AegisGuardianRegistry.sol
+(Sepolia L1)
+
+04_DeployOracle.s.sol
+
+05_DeploySentinel.s.sol
+
+06_DeployHook.s.sol
+
+HookMiner.s.sol
+
+11155111/
+(Sepolia)
+
+5318007/
+(Reactive Kopli)
+
+1301/
+(Unichain Sepolia)
+```
+
+**Sources:**[contracts/.gitignore1-15](https://github.com/HACK3R-CRYPTO/Aegis/blob/5ea5ecc2/contracts/.gitignore#L1-L15)[contracts/README.md1-123](https://github.com/HACK3R-CRYPTO/Aegis/blob/5ea5ecc2/contracts/README.md#L1-L123)
+
+### Source Code (`contracts/src/`)
+
+Contains the four primary Solidity contracts that implement the Aegis system:
+ContractFileNetworkPurpose**AegisHook**`src/AegisHook.sol`Unichain SepoliaUniswap v4 hook implementing circuit breaker**AegisSentinel**`src/AegisSentinel.sol`Reactive Network KopliAutonomous cross-chain event monitor**MockOracle**`src/MockOracle.sol`Ethereum SepoliaPrice feed simulator (replaced by Chainlink in production)**AegisGuardianRegistry**`src/AegisGuardianRegistry.sol`Ethereum SepoliaERC-721 + ERC-8004 reputation system
+**Sources:**[contracts/README.md32-58](https://github.com/HACK3R-CRYPTO/Aegis/blob/5ea5ecc2/contracts/README.md#L32-L58)
 
 ### Deployment Scripts (`contracts/script/`)
 
-Foundry scripts for deploying contracts across chains:
+Contains Foundry deployment scripts numbered in execution order:
+ScriptTarget NetworkChain IDDescription`04_DeployOracle.s.sol`Ethereum Sepolia11155111Deploys `MockOracle` on L1`05_DeploySentinel.s.sol`Reactive Network Kopli5318007Deploys `AegisSentinel` with `--legacy` flag`06_DeployHook.s.sol`Unichain Sepolia1301Deploys `AegisHook` using CREATE2 salt`HookMiner.s.sol`N/AN/AUtility to calculate salt for BEFORE_SWAP flag (0x80...)
+**Sources:**[contracts/README.md105-122](https://github.com/HACK3R-CRYPTO/Aegis/blob/5ea5ecc2/contracts/README.md#L105-L122)
 
-- `04_DeployOracle.s.sol`: Deploys `MockOracle` to Sepolia L1
-- `05_DeploySentinel.s.sol`: Deploys `AegisSentinel` to Reactive Network
-- `06_DeployHook.s.sol`: Deploys `AegisHook` to Unichain L2
+### Compiled Artifacts (`contracts/out/`)
 
-### Test Suite (`contracts/test/`)
+Generated by `forge build`. Contains JSON files with:
 
-Contains `*.t.sol` test files that verify contract behavior. Tests use the `forge-std` library for testing utilities.
+- Compiled bytecode
+- ABI definitions
+- Deployment bytecode
+- Metadata and source mappings
 
----
+This directory is excluded from version control via [contracts/.gitignore3](https://github.com/HACK3R-CRYPTO/Aegis/blob/5ea5ecc2/contracts/.gitignore#L3-L3)
 
-## Frontend Directory Structure (`frontend/`)
+**Sources:**[contracts/.gitignore2-3](https://github.com/HACK3R-CRYPTO/Aegis/blob/5ea5ecc2/contracts/.gitignore#L2-L3)
 
-The `frontend/` directory contains the Next.js dashboard for monitoring the Aegis system:
+### Build Cache (`contracts/cache/`)
 
-### Source Code (`frontend/src/`)
+Stores intermediate compilation artifacts to speed up incremental builds. Automatically managed by Foundry and excluded from version control via [contracts/.gitignore2](https://github.com/HACK3R-CRYPTO/Aegis/blob/5ea5ecc2/contracts/.gitignore#L2-L2)
 
-Contains React/TypeScript components, pages, and application logic. The dashboard provides:
+**Sources:**[contracts/.gitignore2](https://github.com/HACK3R-CRYPTO/Aegis/blob/5ea5ecc2/contracts/.gitignore#L2-L2)
 
-- Guardian reputation statistics
-- Panic mode status monitoring
-- Pool health metrics
-- Intervention history
+### Deployment Logs (`contracts/broadcast/`)
 
----
+Contains chain-specific subdirectories with deployment transaction logs in JSON format. Each deployment generates:
 
-## Library Dependencies (`lib/`)
+- `run-latest.json` - Most recent deployment
+- `run-<timestamp>.json` - Historical deployments
 
-The `lib/` directory contains git submodules that provide external dependencies. These are not stored directly in the repository but referenced via `.gitmodules`:
+Directory structure:
 
-| Submodule | Repository | Purpose |
-| :--- | :--- | :--- |
-| `forge-std` | `foundry-rs/forge-std` | Testing utilities and standard library |
-| `uniswap-hooks` | `openzeppelin/uniswap-hooks` | Uniswap v4 hook interfaces |
-| `hookmate` | `akshatmittal/hookmate` | Hook development utilities |
-| `system-smart-contracts` | `Reactive-Network/system-smart-contracts` | Reactive Network SDK |
+```
+broadcast/
+├── 04_DeployOracle.s.sol/
+│   └── 11155111/                    # Sepolia chain ID
+│       └── run-latest.json
+├── 05_DeploySentinel.s.sol/
+│   └── 5318007/                     # Reactive Kopli chain ID
+│       └── run-latest.json
+└── 06_DeployHook.s.sol/
+    └── 1301/                        # Unichain Sepolia chain ID
+        └── run-latest.json
 
-To initialize dependencies:
-```bash
-git submodule update --init --recursive
 ```
 
+This directory is excluded from version control by default via [contracts/.gitignore6](https://github.com/HACK3R-CRYPTO/Aegis/blob/5ea5ecc2/contracts/.gitignore#L6-L6) but deployment logs are valuable for tracking deployed addresses across networks.
+
+**Sources:**[contracts/.gitignore5-6](https://github.com/HACK3R-CRYPTO/Aegis/blob/5ea5ecc2/contracts/.gitignore#L5-L6)
+
+### Configuration (`contracts/foundry.toml`)
+
+Configures the Foundry toolchain with:
+
+- Solidity compiler version and optimizer settings
+- Remappings for import resolution
+- RPC endpoints for each network
+- Test and deployment profiles
+
+For detailed configuration options, see [Foundry Configuration](/HACK3R-CRYPTO/Aegis/4.4-foundry-configuration).
+
+**Sources:**[contracts/README.md1-123](https://github.com/HACK3R-CRYPTO/Aegis/blob/5ea5ecc2/contracts/README.md#L1-L123)
+
 ---
 
-## Version Control Patterns
+## Frontend Directory
 
-The repository uses `.gitignore` files to exclude generated artifacts from version control:
+The `frontend/` directory contains a Next.js application that provides a dashboard for monitoring and interacting with the deployed Aegis system. It runs on `localhost:3000` during development.
 
-| Pattern | Purpose |
-| :--- | :--- |
-| `.env`, `.env.local` | Environment variables with secrets |
-| `node_modules/` | Node.js dependencies |
-| `contracts/out/`, `contracts/cache/` | Foundry artifacts |
-| `contracts/broadcast/` | Deployment logs |
-| `frontend/.next/`, `frontend/out/` | Next.js build outputs |
+### Frontend Directory Structure
+
+```
+frontend/
+
+app/
+(Next.js 13+ App Router)
+
+components/
+(React Components)
+
+public/
+(Static Assets)
+
+styles/
+(CSS/Tailwind)
+
+.next/
+(Build Output)
+
+out/
+(Static Export)
+
+package.json
+(Dependencies)
+
+next.config.js
+(Configuration)
+
+tsconfig.json
+(TypeScript Config)
+
+.next/cache/
+(Build Cache)
+
+.next/static/
+(Bundled Assets)
+```
+
+**Sources:**[.gitignore20-22](https://github.com/HACK3R-CRYPTO/Aegis/blob/5ea5ecc2/.gitignore#L20-L22)
+
+### Build Outputs
+DirectoryPurposeVersion Control`.next/`Development server build artifactsExcluded via [.gitignore21](https://github.com/HACK3R-CRYPTO/Aegis/blob/5ea5ecc2/.gitignore#L21-L21)`out/`Static HTML export for production deploymentExcluded via [.gitignore22](https://github.com/HACK3R-CRYPTO/Aegis/blob/5ea5ecc2/.gitignore#L22-L22)
+The frontend build process:
+
+1. **Development**: `npm run dev` → outputs to `.next/`
+2. **Production**: `npm run build` → outputs to `.next/`
+3. **Static Export**: `npm run export` → outputs to `out/`
+
+**Sources:**[.gitignore20-22](https://github.com/HACK3R-CRYPTO/Aegis/blob/5ea5ecc2/.gitignore#L20-L22)
+
+---
+
+## Root Level Files
+
+### Version Control Configuration
+FilePurposeKey Exclusions`.gitignore`Root-level exclusions`.env`, `node_modules/`, `out/`, `cache/`, all `*.md` except `README.md``contracts/.gitignore`Contracts-specific exclusions`cache/`, `out/`, `broadcast/`, `docs/`, `.env`, `node_modules/`
+**Sources:**[.gitignore1-26](https://github.com/HACK3R-CRYPTO/Aegis/blob/5ea5ecc2/.gitignore#L1-L26)[contracts/.gitignore1-15](https://github.com/HACK3R-CRYPTO/Aegis/blob/5ea5ecc2/contracts/.gitignore#L1-L15)
+
+### Markdown Files
+
+The root `.gitignore` excludes all Markdown files except `README.md` via the pattern:
+
+```
+*.md
+!README.md
+
+```
+
+This means documentation files like `CONTRIBUTING.md`, `LICENSE.md`, or technical notes are not tracked unless explicitly forced with `git add -f`.
+
+**Sources:**[.gitignore25-26](https://github.com/HACK3R-CRYPTO/Aegis/blob/5ea5ecc2/.gitignore#L25-L26)
+
+---
+
+## Dependency Management
+
+### Git Submodules (`lib/`)
+
+External dependencies are managed as Git submodules in the `lib/` directory. Each submodule is pinned to a specific commit hash for reproducible builds.
+
+```
+Imported by
+
+Imported by
+
+Inherited by
+
+Used by
+
+Implements
+
+Inherited by
+
+lib/
+
+forge-std/
+(Foundry Testing)
+
+uniswap-hooks/
+(OpenZeppelin Hook Base)
+
+hookmate/
+(Hook Dev Utilities)
+
+v4-core/
+(Uniswap V4 Core)
+
+v4-periphery/
+(Uniswap V4 Helpers)
+
+system-smart-contracts/
+(Reactive Network Core)
+
+test/*.sol
+
+script/*.s.sol
+
+src/AegisHook.sol
+
+src/AegisSentinel.sol
+```
+
+For initialization and update procedures, see [Git Submodules](/HACK3R-CRYPTO/Aegis/4.3-git-submodules).
+
+**Sources:**[contracts/README.md1-123](https://github.com/HACK3R-CRYPTO/Aegis/blob/5ea5ecc2/contracts/README.md#L1-L123)
+
+---
+
+## File Path Mapping Reference
+
+This table maps conceptual system components to their physical locations in the repository:
+System ComponentFile PathDescriptionCircuit Breaker`contracts/src/AegisHook.sol`Uniswap v4 hook on UnichainAutonomous Monitor`contracts/src/AegisSentinel.sol`Reactive Network event listenerPrice Feed Simulator`contracts/src/MockOracle.sol`Testnet oracle on SepoliaReputation System`contracts/src/AegisGuardianRegistry.sol`ERC-721/ERC-8004 registry on SepoliaHook Mining Utility`contracts/script/HookMiner.s.sol`CREATE2 salt calculator for 0x80... addressOracle Deployment`contracts/script/04_DeployOracle.s.sol`Sepolia L1 deployment scriptSentinel Deployment`contracts/script/05_DeploySentinel.s.sol`Reactive Network deployment scriptHook Deployment`contracts/script/06_DeployHook.s.sol`Unichain L2 deployment scriptDashboard Frontend`frontend/`Next.js monitoring applicationTesting Framework`lib/forge-std/`Foundry Standard LibraryUniswap Integration`lib/uniswap-hooks/`OpenZeppelin hook base contractsReactive Integration`lib/system-smart-contracts/`Reactive Network core contracts
+**Sources:**[contracts/README.md32-122](https://github.com/HACK3R-CRYPTO/Aegis/blob/5ea5ecc2/contracts/README.md#L32-L122)[.gitignore1-26](https://github.com/HACK3R-CRYPTO/Aegis/blob/5ea5ecc2/.gitignore#L1-L26)
+
+---
+
+## Build Artifact Flow
+
+This diagram illustrates how source code is transformed into deployment artifacts:
+
+```
+Deployment Logs (Optional)
+
+Artifacts (Excluded from Git)
+
+Build Phase
+
+Source Code
+
+Compiled by
+
+forge script --broadcast
+
+Bundled by
+
+next export
+
+contracts/src/*.sol
+(Solidity Source)
+
+frontend/components/*.tsx
+(TypeScript Source)
+
+forge build
+
+next build
+
+contracts/out/
+(ABI + Bytecode JSON)
+
+contracts/cache/
+(Compiler Cache)
+
+frontend/.next/
+(Bundled JS/CSS)
+
+frontend/out/
+(Static HTML)
+
+contracts/broadcast/
+(Transaction Receipts)
+```
+
+**Sources:**[.gitignore10-13](https://github.com/HACK3R-CRYPTO/Aegis/blob/5ea5ecc2/.gitignore#L10-L13)[.gitignore20-22](https://github.com/HACK3R-CRYPTO/Aegis/blob/5ea5ecc2/.gitignore#L20-L22)[contracts/.gitignore1-15](https://github.com/HACK3R-CRYPTO/Aegis/blob/5ea5ecc2/contracts/.gitignore#L1-L15)

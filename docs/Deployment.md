@@ -1,222 +1,222 @@
 # Deployment
+Relevant source files
+- [contracts/README.md](https://github.com/HACK3R-CRYPTO/Aegis/blob/5ea5ecc2/contracts/README.md)
+- [contracts/foundry.toml](https://github.com/HACK3R-CRYPTO/Aegis/blob/5ea5ecc2/contracts/foundry.toml)
 
-## Purpose and Scope
+This page provides an overview of the Aegis deployment process, which spans three blockchain networks with different technical requirements and deployment sequences. The deployment strategy is designed to establish the cross-chain circuit breaker system across Ethereum Sepolia (L1), Reactive Network, and Unichain Sepolia (L2).
 
-This document provides a comprehensive guide for deploying the Aegis cross-chain circuit breaker system across three blockchain networks: Ethereum Sepolia (L1), Reactive Network Lasna, and Unichain Sepolia (L2). The deployment process requires executing multiple Foundry scripts in a specific order, with cross-chain configuration dependencies between contracts.
+For detailed information about specific aspects of deployment:
 
-For detailed information about individual deployment scripts, see [Deployment Scripts](./Deployment-Scripts.md). For network-specific RPC endpoints and chain IDs, see [Network Configuration](./Network-Configuration.md).
+- Deployment script implementation and execution order: see [Deployment Scripts](/HACK3R-CRYPTO/Aegis/3.1-deployment-scripts)
+- RPC endpoints and chain-specific configurations: see [Network Configuration](/HACK3R-CRYPTO/Aegis/3.2-network-configuration)
+- Broadcast logs and transaction records: see [Deployment Logs](/HACK3R-CRYPTO/Aegis/3.3-deployment-logs)
+- CREATE2 salt calculation for hook addresses: see [Hook Mining](/HACK3R-CRYPTO/Aegis/3.4-hook-mining)
 
----
+For information about setting up the development environment before deployment: see [Development Setup](/HACK3R-CRYPTO/Aegis/4-development-setup).
 
-## Deployment Architecture
+## Deployment Strategy
 
-The Aegis system consists of four smart contracts deployed across three separate blockchain networks. Each network serves a distinct architectural role in the cross-chain circuit breaker mechanism.
+Aegis uses a **sequential multi-network deployment** approach where contracts must be deployed in a specific order to establish proper cross-chain communication channels. The deployment process uses Foundry's script infrastructure, with each contract deployed via numbered scripts that execute against different RPC endpoints.
 
-```mermaid
-graph TD
-    subgraph L1 [Ethereum Sepolia (Chain 11155111)]
-        Oracle[MockOracle: 0x1392...a7D8]
-        Registry[GuardianRegistry]
-    end
+The deployment sequence is:
 
-    subgraph Reactive [Reactive Network Lasna (Chain 5318007)]
-        Sentinel[AegisSentinel: 0x0B6a...b6B6]
-    end
+1. **Oracle** (Sepolia L1) - Establishes the price feed source
+2. **Sentinel** (Reactive Network) - Deploys the autonomous watcher
+3. **Hook** (Unichain L2) - Installs the circuit breaker on the target pool
 
-    subgraph L2 [Unichain Sepolia (Chain 1301)]
-        Hook[AegisHook: 0x1E2a...8080]
-    end
+This order is critical because:
 
-    Oracle -->|PriceUpdate Event| Sentinel
-    Registry -->|NewFeedback Event| Sentinel
-    Sentinel -->|setPanicMode()| Hook
+- The Sentinel requires the Oracle's contract address to subscribe to `PriceUpdate` events
+- The Hook requires the Sentinel's address for access control on `setPanicMode()`
+- The Sentinel requires the Hook's address to send cross-chain panic triggers
+
+**Sources:**[contracts/README.md96-122](https://github.com/HACK3R-CRYPTO/Aegis/blob/5ea5ecc2/contracts/README.md#L96-L122)
+
+## Network Topology
+
+The following diagram maps the deployment targets to their respective blockchain networks and shows the dependency relationships:
+
+```
+Unichain Sepolia (Chain ID: 1301)
+
+Reactive Network Lasna (Chain ID: 5318007)
+
+Ethereum Sepolia (Chain ID: 11155111)
+
+Deployment Sequence
+
+forge script 04_DeployOracle.s.sol
+
+forge script 05_DeploySentinel.s.sol --legacy
+
+forge script 06_DeployHook.s.sol
+
+Address required by
+
+Address required by
+
+1. Deploy MockOracle
+2. Deploy AegisSentinel
+3. Deploy AegisHook
+
+MockOracle.sol
+0x29f8...BA3b
+Emits PriceUpdate events
+
+AegisSentinel.sol
+0x0f76...b482
+Listens & Triggers
+
+AegisHook.sol
+0xBaa0...C080
+Circuit Breaker
 ```
 
-| Network | Chain ID | Contract | Role |
-| --- | --- | --- | --- |
-| **Ethereum Sepolia** | 11155111 | `MockOracle` | Emits `PriceUpdate` events |
-| **Ethereum Sepolia** | 11155111 | `GuardianRegistry` | Future: ERC-721 + ERC-8004 Reputation state |
-| **Reactive Network** | 5318007 | `AegisSentinel` | Listens to L1 events, triggers L2 actions |
-| **Unichain Sepolia** | 1301 | `AegisHook` | Enforces circuit breaker rules |
+**Sources:**[contracts/README.md99-103](https://github.com/HACK3R-CRYPTO/Aegis/blob/5ea5ecc2/contracts/README.md#L99-L103)[contracts/foundry.toml19-22](https://github.com/HACK3R-CRYPTO/Aegis/blob/5ea5ecc2/contracts/foundry.toml#L19-L22)
 
----
+## Deployment Tooling
 
-## Deployment Order and Dependencies
+Aegis uses the **Foundry** toolchain for all contract deployment operations. The primary tool is `forge script`, which executes Solidity deployment scripts that inherit from the `Script` base class provided by `forge-std`.
 
-The deployment process must follow a strict sequential order due to cross-contract dependencies. Each contract requires configuration data from previously deployed contracts.
+### Core Commands
+CommandPurpose`forge build`Compiles all contracts and generates artifacts in `out/``forge script <path> --rpc-url <network> --broadcast`Executes a deployment script and broadcasts transactions`forge script <path> --rpc-url <network> --broadcast --legacy`Same as above, but uses legacy transaction format (EIP-155)`forge verify-contract`Verifies deployed contract source code on block explorers
+The `--broadcast` flag causes transactions to be signed and sent to the network, with results recorded in the `broadcast/` directory. Without this flag, scripts execute in simulation mode only.
 
-| Step | Contract | Network | Script | Dependencies |
-| --- | --- | --- | --- | --- |
-| 1 | `MockOracle` | Ethereum Sepolia | `04_DeployOracle.s.sol` | None |
-| 2 | `AegisSentinel` | Reactive Lasna | `05_DeploySentinel.s.sol` | Oracle address from Step 1 |
-| 3 | `AegisHook` | Unichain Sepolia | `06_DeployHook.s.sol` | Sentinel address from Step 2 |
+**Sources:**[contracts/README.md70-122](https://github.com/HACK3R-CRYPTO/Aegis/blob/5ea5ecc2/contracts/README.md#L70-L122)[contracts/foundry.toml1-27](https://github.com/HACK3R-CRYPTO/Aegis/blob/5ea5ecc2/contracts/foundry.toml#L1-L27)
 
-### Critical Deployment Constraints
+## Pre-Deployment Requirements
 
-1.  **Oracle-First Requirement**: `AegisSentinel` constructor requires the deployed `MockOracle` address to configure event subscription parameters via `subscribe()` method.
-2.  **Sentinel Address for Hook**: `AegisHook` constructor requires the deployed `AegisSentinel` address to restrict `setPanicMode()` access control using the `onlySentinel` modifier.
-3.  **CREATE2 Salt Mining**: `AegisHook` deployment requires a pre-computed salt value to ensure the deployed address has the `BEFORE_SWAP_FLAG` (0x80...) required by Uniswap V4 pool manager hook validation.
+Before executing deployment scripts, the following must be configured:
 
----
+### Environment Variables
+
+Deployment scripts require private keys for transaction signing. These are typically loaded from environment variables or `.env` files:
+
+```
+# Required for all deployments
+PRIVATE_KEY=0x...
+
+# Network-specific RPC URLs (can override foundry.toml)
+SEPOLIA_RPC_URL=https://eth-sepolia.g.alchemy.com/v2/...
+REACTIVE_RPC_URL=https://lasna-rpc.rnk.dev/
+UNICHAIN_SEPOLIA_RPC_URL=https://unichain-sepolia-rpc.publicnode.com
+```
+
+### RPC Endpoint Configuration
+
+The RPC endpoints are defined in [foundry.toml19-22](https://github.com/HACK3R-CRYPTO/Aegis/blob/5ea5ecc2/foundry.toml#L19-L22):
+
+```
+[rpc_endpoints]
+unichain_sepolia = "https://unichain-sepolia-rpc.publicnode.com"
+reactive = "https://lasna-rpc.rnk.dev/"
+sepolia = "https://eth-sepolia.g.alchemy.com/v2/uHo7ICSBqpDRguF-DhjWWF72l-sPapYX"
+```
+
+### Compiler Configuration
+
+The [foundry.toml1-16](https://github.com/HACK3R-CRYPTO/Aegis/blob/5ea5ecc2/foundry.toml#L1-L16) file specifies critical compiler settings:
+SettingValuePurpose`solc_version``0.8.26`Solidity compiler version`evm_version``cancun`Target EVM version for deployment`via_ir``true`Enables IR-based compilation for optimizer`bytecode_hash``none`Disables metadata hash for deterministic builds`ffi``true`Allows Foundry scripts to execute external commands (required for hook mining)
+**Sources:**[contracts/foundry.toml1-27](https://github.com/HACK3R-CRYPTO/Aegis/blob/5ea5ecc2/contracts/foundry.toml#L1-L27)
 
 ## Deployment Workflow
 
-The following sequence diagram illustrates the complete deployment workflow, including cross-network contract instantiation and post-deployment configuration steps.
+The following sequence diagram illustrates the complete deployment workflow, including compilation, script execution, and transaction broadcasting:
 
-```mermaid
-sequenceDiagram
-    participant Dev as Developer
-    participant Forge as Foundry Toolchain
-    participant Sepolia as Ethereum Sepolia
-    participant Reactive as Reactive Network
-    participant Unichain as Unichain Sepolia
-
-    note over Dev: Phase 1: Deploy Oracle on L1
-    Dev->>Forge: forge script 04_DeployOracle
-    Forge->>Sepolia: Deploy MockOracle
-    Sepolia-->>Forge: Contract Address (0x1392...)
-    Forge-->>Dev: Save address
-
-    note over Dev: Phase 2: Deploy Sentinel
-    Dev->>Forge: forge script 05_DeploySentinel
-    Forge->>Reactive: Deploy AegisSentinel(oracleAddr)
-    Reactive-->>Forge: Contract Address (0x0B6a...)
-    Forge-->>Dev: Save address
-
-    note over Dev: Phase 3: Sentinel Subscription
-    Dev->>Reactive: Call subscribe() on Sentinel
-
-    note over Dev: Phase 4: Mine Salt & Deploy Hook
-    Dev->>Forge: Mine CREATE2 salt (for 0x80... prefix)
-    Dev->>Forge: forge script 06_DeployHook
-    Forge->>Unichain: Deploy AegisHook(sentinelAddr)
-    Unichain-->>Forge: Contract Address (0x1E2a...)
-    Forge-->>Dev: Deployment and Configuration Complete
+```
+"broadcast/
+Logs"
+"Target Network
+(RPC Endpoint)"
+"Deployment Script
+(inherits Script)"
+"forge script"
+"Developer"
+"broadcast/
+Logs"
+"Target Network
+(RPC Endpoint)"
+"Deployment Script
+(inherits Script)"
+"forge script"
+"Developer"
+"Logs contain: address, tx hash, block number, gas used"
+"forge build"
+"Compile contracts"
+"Artifacts in out/"
+"forge script ... --rpc-url <network> --broadcast"
+"Execute run() function"
+"vm.startBroadcast()"
+"Deploy contract via new"
+"Send transaction"
+"Return tx hash + address"
+"vm.stopBroadcast()"
+"Return deployment data"
+"Write JSON log"
+"Deployment complete"
 ```
 
----
+**Sources:**[contracts/README.md70-122](https://github.com/HACK3R-CRYPTO/Aegis/blob/5ea5ecc2/contracts/README.md#L70-L122)
 
-## Foundry Script Execution
+## Network-Specific Deployment Considerations
 
-Each deployment script is executed using the `forge script` command with network-specific parameters.
+Each target network has unique deployment requirements:
 
-### Oracle Deployment (Step 1)
+### Sepolia (L1) - Oracle Deployment
 
-```bash
-forge script script/04_DeployOracle.s.sol \
-  --rpc-url sepolia \
-  --broadcast \
-  --verify
+- **Script:**`script/04_DeployOracle.s.sol`
+- **Command:**`forge script script/04_DeployOracle.s.sol --rpc-url sepolia --broadcast`
+- **Considerations:**
+- Standard deployment, no special flags required
+- Contract address needed by Sentinel for event subscription
+- Deploys to: `0x29f8f8d2A00330F9683e73a926F61AE7E91cBA3b`
+
+### Reactive Network - Sentinel Deployment
+
+- **Script:**`script/05_DeploySentinel.s.sol`
+- **Command:**`forge script script/05_DeploySentinel.s.sol --rpc-url reactive --broadcast --legacy`
+- **Considerations:**
+- **Requires `--legacy` flag** for EIP-155 compatibility
+- Post-deployment subscription call required (manual step)
+- Deploys to Lasna testnet: `0x0f764437ffBE1fcd0d0d276a164610422710B482`
+
+The `--legacy` flag is critical as noted in [contracts/README.md115](https://github.com/HACK3R-CRYPTO/Aegis/blob/5ea5ecc2/contracts/README.md#L115-L115) This forces Foundry to use pre-EIP-1559 transaction format, which the Reactive Network requires.
+
+### Unichain Sepolia (L2) - Hook Deployment
+
+- **Script:**`script/06_DeployHook.s.sol`
+- **Command:**`forge script script/06_DeployHook.s.sol --rpc-url unichain_sepolia --broadcast`
+- **Considerations:**
+- **Requires salt mining** to generate address with `BEFORE_SWAP` flag (0x80...)
+- Uses CREATE2 for deterministic deployment
+- Hook address must match Uniswap v4 permission flags
+- Deploys to: `0xBaa0573e3BE4291b58083e717E9EF5051772C080`
+
+The hook deployment is the most complex due to Uniswap v4's address-based permission system (see [Hook Mining](/HACK3R-CRYPTO/Aegis/3.4-hook-mining) for details).
+
+**Sources:**[contracts/README.md105-122](https://github.com/HACK3R-CRYPTO/Aegis/blob/5ea5ecc2/contracts/README.md#L105-L122)
+
+## Deployment Results
+
+The successfully deployed contract addresses are:
+ContractNetworkChain IDAddressPurpose`MockOracle`Ethereum Sepolia11155111`0x29f8f8d2A00330F9683e73a926F61AE7E91cBA3b`Price feed simulator`AegisSentinel`Reactive Lasna5318007`0x0f764437ffBE1fcd0d0d276a164610422710B482`Autonomous watcher & cross-chain orchestrator`AegisHook`Unichain Sepolia1301`0xBaa0573e3BE4291b58083e717E9EF5051772C080`Uniswap v4 circuit breaker hook
+These addresses represent the current testnet deployment. The `AegisGuardianRegistry` (ERC-721/ERC-8004) is planned for future deployment on Sepolia.
+
+**Sources:**[contracts/README.md99-103](https://github.com/HACK3R-CRYPTO/Aegis/blob/5ea5ecc2/contracts/README.md#L99-L103)
+
+## Post-Deployment Verification
+
+After deployment, the system should be verified through:
+
+1. **Contract Verification** - Source code verification on block explorers
+2. **Integration Testing** - Execute the integration test suite:
+
 ```
-
-**Script Functionality:**
-- Deploys `MockOracle` contract to Ethereum Sepolia.
-- Outputs deployment address to `broadcast/04_DeployOracle.s.sol/11155111/run-latest.json`.
-
-### Sentinel Deployment (Step 2)
-
-```bash
-forge script script/05_DeploySentinel.s.sol \
-  --rpc-url reactive \
-  --broadcast \
-  --legacy
+forge test --match-contract AegisIntegrationTest -vv
 ```
+3. **Manual Subscription** - The Sentinel requires a manual subscription call to register with the Reactive Network's event system (this step is noted in [contracts/README.md114](https://github.com/HACK3R-CRYPTO/Aegis/blob/5ea5ecc2/contracts/README.md#L114-L114))
+4. **Cross-Chain Testing** - Trigger a test price update on the Oracle and verify the Hook responds with panic mode activation
 
-**Script Functionality:**
-- Deploys `AegisSentinel` to Reactive Network Lasna.
-- Constructor requires: `chainId` (11155111), `oracleAddress` (from Step 1).
-- Requires `--legacy` flag due to Reactive Network EVM compatibility.
-- Requires manual `subscribe()` call post-deployment to activate event listening.
+For comprehensive testing procedures, see [Testing](/HACK3R-CRYPTO/Aegis/5-testing).
 
-### Hook Deployment (Step 3)
-
-```bash
-forge script script/06_DeployHook.s.sol \
-  --rpc-url unichain_sepolia \
-  --broadcast \
-  --verify
-```
-
-**Script Functionality:**
-- Deploys `AegisHook` to Unichain Sepolia using CREATE2.
-- Constructor requires: `poolManager` address, `sentinelAddress` (from Step 2).
-- Uses pre-computed salt to achieve hook address with `BEFORE_SWAP_FLAG` prefix.
-
----
-
-## Network Configuration Requirements
-
-The deployment process requires properly configured RPC endpoints and private keys for all three networks. These are specified in `foundry.toml`.
-
-| Network | Chain ID | RPC Configuration Key | Required for |
-| --- | --- | --- | --- |
-| Ethereum Sepolia | 11155111 | `sepolia` | Oracle deployment |
-| Reactive Lasna | 5318007 | `reactive` | Sentinel deployment |
-| Unichain Sepolia | 1301 | `unichain_sepolia` | Hook deployment |
-
-**Environment Variables:**
-- `PRIVATE_KEY`: Deployer account private key (must have native tokens on all networks).
-- `ETHERSCAN_API_KEY`: For contract verification on Sepolia.
-
----
-
-## Post-Deployment Configuration
-
-After all contracts are deployed, additional configuration steps are required to activate the cross-chain system.
-
-### Sentinel Event Subscription
-
-The `AegisSentinel` contract must be manually configured to listen for `PriceUpdate` events from the deployed `MockOracle`:
-
-```bash
-cast send 0x0B6ae13119Fc3b61d6ABb115342A1A075e14b6B6 \
-  "subscribe()" \
-  --rpc-url reactive \
-  --private-key $PRIVATE_KEY
-```
-
-This call registers the Sentinel with the Reactive Network's event subscription system, establishing the L1→Reactive event bridge.
-
-### Verification of Cross-Chain Linkage
-
-1.  **Oracle→Sentinel**: Confirm Sentinel is subscribed to Oracle events.
-2.  **Sentinel→Hook**: Confirm Hook's `authorizedSentinel` matches deployed Sentinel address.
-3.  **Hook Address**: Confirm Hook address satisfies `BEFORE_SWAP_FLAG` (0x80...).
-
----
-
-## Deployment Output Artifacts
-
-Each deployment script generates a broadcast log JSON file containing complete transaction metadata. These files are stored in `broadcast/<ScriptName>/<ChainID>/run-latest.json` and include:
-- Deployed contract addresses
-- Constructor arguments
-- Transaction hashes
-- Gas usage statistics
-- Block numbers and timestamps
-- Contract ABI and bytecode
-
----
-
-## Deployment State Diagram
-
-```mermaid
-stateDiagram-v2
-    [*] --> Undeployed
-    Undeployed --> OracleDeployed: forge script 04_DeployOracle
-    OracleDeployed --> SentinelDeployed: forge script 05_DeploySentinel
-    SentinelDeployed --> CrossChainLinked: Subscribe Sentinel
-    CrossChainLinked --> HookDeployed: forge script 06_DeployHook
-    HookDeployed --> FullyOperational: System verification
-
-    state OracleDeployed {
-        [*] --> MockOracle: Deployed on Sepolia
-    }
-    
-    state SentinelDeployed {
-        [*] --> AegisSentinel: Deployed on Reactive
-    }
-    
-    state HookDeployed {
-        [*] --> AegisHook: Deployed on Unichain
-    }
-```
+**Sources:**[contracts/README.md79-94](https://github.com/HACK3R-CRYPTO/Aegis/blob/5ea5ecc2/contracts/README.md#L79-L94)
