@@ -1,39 +1,32 @@
-# Devin-Aegis
+# Aegis Documentation
 
-## Content Index
+This directory contains comprehensive documentation for the Aegis cross-chain circuit breaker system.
 
-- [Aegis-Overview](Aegis-Overview.md)
-- [System-Architecture](System-Architecture.md)
-- [Core-Smart-Contracts](Core-Smart-Contracts.md)
-- [AegisHook](AegisHook.md)
-- [AegisSentinel](AegisSentinel.md)
-- [MockOracle](MockOracle.md)
-- [Guardian-Registry](Guardian-Registry.md)
-- [Supporting-Components](Supporting-Components.md)
-- [Hybrid-Relayer](Hybrid-Relayer.md)
-- [Frontend-Dashboard](Frontend-Dashboard.md)
-- [Frontend-Dashboard-1](Frontend-Dashboard-1.md)
-- [Frontend-Dashboard-2](Frontend-Dashboard-2.md)
-- [Deployment](Deployment.md)
-- [Deployment-Scripts](Deployment-Scripts.md)
-- [Network-Configuration](Network-Configuration.md)
-- [Development-Guide](Development-Guide.md)
-- [Project-Structure](Project-Structure.md)
-- [Foundry-Setup](Foundry-Setup.md)
-- [Dependencies-and-Submodules](Dependencies-and-Submodules.md)
-- [Build-System](Build-System.md)
-- [Reference](Reference.md)
-- [Foundry-Configuration-Reference](Foundry-Configuration-Reference.md)
-- [Forge-Standard-Library](Forge-Standard-Library.md)
-- [Cheatcode-Generation](Cheatcode-Generation.md)
-- [Contributing-Guidelines](Contributing-Guidelines.md)
-- [License-Information](License-Information.md)
-- [Forge-std-CI-CD](Forge-std-CI-CD.md)
-- [Forge-std-CI-CD-1](Forge-std-CI-CD-1.md)
-- [Forge-std-CI-CD-2](Forge-std-CI-CD-2.md)
-- [Forge-std-CI-CD-3](Forge-std-CI-CD-3.md)
-- [Forge-std-CI-CD-4](Forge-std-CI-CD-4.md)
-- [Forge-std-CI-CD-5](Forge-std-CI-CD-5.md)
-- [Forge-std-CI-CD-6](Forge-std-CI-CD-6.md)
-- [Forge-std-CI-CD-7](Forge-std-CI-CD-7.md)
-- [Forge-std-CI-CD-8](Forge-std-CI-CD-8.md)
+## System Overview
+- [Aegis Overview](Aegis-Overview.md): High-level introduction to the Aegis system, its purpose, and core components.
+- [System Architecture](System-Architecture.md): Detailed architectural explanation including the Guardian Network, Oracle System, and Circuit Breaker Logic.
+- [Deployment](Deployment.md): Overview of deployed contracts and network addresses.
+
+## Core Smart Contracts
+- [Core Smart Contracts](Core-Smart-Contracts.md): Summary of the main contracts.
+- [AegisHook](AegisHook.md): Documentation for the Uniswap v4 Hook responsible for pausing trading.
+- [AegisSentinel](AegisSentinel.md): Documentation for the Reactive Network sentinel that monitors and coordinates events.
+- [MockOracle](MockOracle.md): Documentation for the simulation oracle used in testing.
+- [Guardian Registry](Guardian-Registry.md): Documentation for the reputation and access control system for Guardians.
+
+## Infrastructure & Configuration
+- [Network Configuration](Network-Configuration.md): Details on RPC endpoints, chain IDs, and network setups.
+- [Foundry Setup](Foundry-Setup.md): Guide to installing and configuring the Foundry toolchain.
+- [Foundry Configuration Reference](Foundry-Configuration-Reference.md): Reference for `foundry.toml` settings.
+- [Dependencies and Submodules](Dependencies-and-Submodules.md): Guide to managing external libraries (forge-std, v4-core, etc.).
+- [Build System](Build-System.md): Explanation of the compilation and build process.
+- [Project Structure](Project-Structure.md): Guide to the repository layout and file organization.
+
+## Development & Testing
+- [Development Guide](Development-Guide.md): Best practices, workflow, and coding standards.
+- [Contributing Guidelines](Contributing-Guidelines.md): Instructions for contributing to the project.
+- [Forge Standard Library](Forge-Standard-Library.md): Overview of the `forge-std` testing utilities used.
+- [Deployment Scripts](Deployment-Scripts.md): Guide to using the provided scripts for multi-chain deployment.
+
+## Frontend
+- [Frontend Dashboard](Frontend-Dashboard.md): Documentation for the Next.js monitoring dashboard.
