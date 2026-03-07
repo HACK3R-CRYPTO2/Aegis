@@ -23,4 +23,5 @@ frontend/out/
 
 
 *.md
+!docs/*.md
 !README.md
