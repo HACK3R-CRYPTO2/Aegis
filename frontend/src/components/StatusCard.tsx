@@ -4,6 +4,7 @@ import { useReadContract } from 'wagmi'
 import { AEGIS_HOOK_ABI } from '../lib/abis'
 import { DEPLOYED_ADDRESSES } from '../lib/addresses'
 import { unichainSepolia } from '../lib/config'
+import { useState, useEffect } from 'react'
 import { Shield, AlertTriangle, CheckCircle } from 'lucide-react'
 
 export function StatusCard() {
@@ -17,8 +18,15 @@ export function StatusCard() {
         }
     })
 
+    const [mounted, setMounted] = useState(false)
+    useEffect(() => {
+        setMounted(true)
+    }, [])
+
     // Theme Logic
     const isPanic = panicMode === true
+
+    if (!mounted) return <div className="p-5 rounded-2xl border border-white/5 animate-pulse h-[140px] bg-white/5" />
 
     return (
         <div className={`p-5 rounded-2xl border transition-all duration-500 glass-card ${isPanic

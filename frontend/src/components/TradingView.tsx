@@ -5,7 +5,7 @@ import { AEGIS_HOOK_ABI } from '../lib/abis'
 import { DEPLOYED_ADDRESSES } from '../lib/addresses'
 import { unichainSepolia } from '../lib/config'
 import { ArrowDown, Wallet, Settings, AlertOctagon } from 'lucide-react'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 
 export function TradingView() {
     const { data: panicMode } = useReadContract({
@@ -21,6 +21,13 @@ export function TradingView() {
     const [amount, setAmount] = useState<string>("")
     const [isSwapping, setIsSwapping] = useState(false)
     const [txStatus, setTxStatus] = useState<'idle' | 'success' | 'error'>('idle')
+    const [mounted, setMounted] = useState(false)
+
+    useEffect(() => {
+        setMounted(true)
+    }, [])
+
+    if (!mounted) return <div className="glass-card p-5 rounded-3xl h-[400px] animate-pulse bg-white/5 w-full" />
 
     const handleSwap = () => {
         setIsSwapping(true)
