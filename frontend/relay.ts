@@ -48,7 +48,7 @@ const MAX_BLOCK_RANGE = 100; // Adaptive fallback
 const START_OFFSET = 50n;
 let lastProcessedBlock = 0n;
 let isRelaying = false;
-let currentPanicState: boolean | null = null;
+let currentArmedState: boolean | null = null;
 
 async function checkAndRelay() {
     if (isRelaying) return;
@@ -78,30 +78,30 @@ async function checkAndRelay() {
         if (logs.length > 0) {
             console.log(`\n📨 Found ${logs.length} new Price Updates!`);
             
-            if (currentPanicState === null) {
-                currentPanicState = await unichainPublic.readContract({
+            if (currentArmedState === null) {
+                currentArmedState = await unichainPublic.readContract({
                     address: DEPLOYED_ADDRESSES.AEGIS_HOOK as `0x${string}`,
                     abi: AEGIS_HOOK_ABI,
-                    functionName: 'panicMode'
+                    functionName: 'sentinelArmed'
                 });
             }
 
             for (const log of logs) {
-                const { newPrice, updater } = (log as any).args;
+                const { newPrice } = (log as any).args;
                 const ethPrice = formatEther(newPrice);
                 const ethPriceFixed = Number(ethPrice).toFixed(0);
 
-                console.log(`   -> Signal: $${ethPriceFixed} | Source: ${updater}`);
+                console.log(`   -> Global Signal: $${ethPriceFixed}`);
 
-                if (Number(ethPriceFixed) < 1500 && !currentPanicState) {
-                    console.warn("🚨 THRESHOLD BREACHED: Activating Aegis Circuit Breaker...");
-                    currentPanicState = true; 
-                    await _triggerPanic(true);
+                if (Number(ethPriceFixed) < 1500) {
+                    console.warn(`🚨 EQUILIBRIUM BREACH: Syncing Global Price $${ethPriceFixed} to Unichain...`);
+                    currentArmedState = true; 
+                    await _syncEquilibrium(newPrice, true);
                 } 
-                else if (Number(ethPriceFixed) >= 1500 && currentPanicState) {
-                    console.info("✅ MARKET STABILIZED: Restoring Liquidity Flows...");
-                    currentPanicState = false;
-                    await _triggerPanic(false);
+                else if (currentArmedState) {
+                    console.info("✅ MARKET STABILIZED: Restoring Normal Equilibrium...");
+                    currentArmedState = false;
+                    await _syncEquilibrium(newPrice, false);
                 }
             }
         }
@@ -122,17 +122,17 @@ async function checkAndRelay() {
 
 // --- Internal Workflows ---
 
-async function _triggerPanic(status: boolean) {
+async function _syncEquilibrium(price: bigint, status: boolean) {
     try {
         const hash = await unichainWallet.writeContract({
             address: DEPLOYED_ADDRESSES.AEGIS_HOOK as `0x${string}`,
             abi: AEGIS_HOOK_ABI,
-            functionName: 'setPanicMode',
-            args: [status]
+            functionName: 'setL1Price',
+            args: [price, status]
         });
-        console.log(`🛡️  Action Confirmed: ${status ? 'PANIC' : 'NORMAL'} | Tx: ${hash}`);
+        console.log(`🛡️  Equilibrium Synced: $${formatEther(price)} | Armed: ${status} | Tx: ${hash}`);
     } catch (e: any) {
-        console.error("❌ Failed to update Hook status:", e.shortMessage || e.message);
+        console.error("❌ Failed to sync Equilibrium:", e.shortMessage || e.message);
     }
 }
 

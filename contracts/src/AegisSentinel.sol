@@ -99,12 +99,13 @@ contract AegisSentinel is AbstractReactive {
             currentConfirmations++;
             if (currentConfirmations >= MIN_CONFIRMATIONS) {
                 emit PanicTriggered(price);
-                _emitCallback(UNICHAIN_CHAIN_ID, aegisHook, abi.encodeWithSignature("setPanicMode(bool)", true));
+                // Bridge Global Divergence signal to Unichain Hook
+                _emitCallback(UNICHAIN_CHAIN_ID, aegisHook, abi.encodeWithSignature("setL1Price(uint256,bool)", price, true));
             }
         } else {
-            // Market Stabilized - Reset Consensus
+            // Market Stabilized - Reset Consensus and broadcast normal equilibrium
             currentConfirmations = 0;
-            _emitCallback(UNICHAIN_CHAIN_ID, aegisHook, abi.encodeWithSignature("setPanicMode(bool)", false));
+            _emitCallback(UNICHAIN_CHAIN_ID, aegisHook, abi.encodeWithSignature("setL1Price(uint256,bool)", price, false));
         }
     }
 

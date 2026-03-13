@@ -19,11 +19,11 @@ export default function Home() {
         {/* Header - Compact */}
         <header className="flex items-center justify-between mb-4 shrink-0 border-b border-white/5 pb-4">
           <div className="flex items-center gap-4">
-            <div className="w-10 h-10 bg-gradient-to-br from-indigo-600 to-purple-700 rounded-xl flex items-center justify-center shadow-[0_0_20px_rgba(123,47,247,0.3)] border border-white/10">
+            <div className="w-10 h-10 bg-linear-to-br from-indigo-600 to-purple-700 rounded-xl flex items-center justify-center shadow-[0_0_20px_rgba(123,47,247,0.3)] border border-white/10">
               <ShieldCheck className="w-6 h-6 text-white" />
             </div>
             <div>
-              <h1 className="text-3xl font-black tracking-tight font-cyber bg-clip-text text-transparent bg-gradient-to-r from-white via-white to-gray-400">
+              <h1 className="text-3xl font-black tracking-tight font-cyber bg-clip-text text-transparent bg-linear-to-r from-white via-white to-gray-400">
                 AEGIS <span className="text-neon-purple drop-shadow-[0_0_15px_rgba(168,85,247,0.5)]">PRIME</span>
               </h1>
             </div>

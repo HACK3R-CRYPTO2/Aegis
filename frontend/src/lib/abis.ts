@@ -1,22 +1,35 @@
 export const AEGIS_HOOK_ABI = [
     {
         "type": "function",
-        "name": "panicMode",
+        "name": "sentinelArmed",
         "inputs": [],
         "outputs": [{ "name": "", "type": "bool", "internalType": "bool" }],
         "stateMutability": "view"
     },
     {
         "type": "function",
-        "name": "setPanicMode",
-        "inputs": [{ "name": "_status", "type": "bool", "internalType": "bool" }],
+        "name": "l1Price",
+        "inputs": [],
+        "outputs": [{ "name": "", "type": "uint256", "internalType": "uint256" }],
+        "stateMutability": "view"
+    },
+    {
+        "type": "function",
+        "name": "setL1Price",
+        "inputs": [
+            { "name": "_price", "type": "uint256", "internalType": "uint256" },
+            { "name": "_armed", "type": "bool", "internalType": "bool" }
+        ],
         "outputs": [],
         "stateMutability": "nonpayable"
     },
     {
         "type": "event",
-        "name": "PanicModeUpdated",
-        "inputs": [{ "name": "status", "type": "bool", "indexed": false, "internalType": "bool" }],
+        "name": "SentinelResponse",
+        "inputs": [
+            { "name": "price", "type": "uint256", "indexed": false, "internalType": "uint256" },
+            { "name": "armed", "type": "bool", "indexed": false, "internalType": "bool" }
+        ],
         "anonymous": false
     }
 ] as const;

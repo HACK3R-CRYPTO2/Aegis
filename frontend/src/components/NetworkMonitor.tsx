@@ -29,17 +29,17 @@ export function NetworkMonitor() {
     })
 
     // 2. Watch Hook Status (Unichain)
-    const { data: panicMode } = useReadContract({
+    const { data: sentinelArmed } = useReadContract({
         address: DEPLOYED_ADDRESSES.AEGIS_HOOK as `0x${string}`,
         abi: AEGIS_HOOK_ABI,
-        functionName: 'panicMode',
+        functionName: 'sentinelArmed',
         chainId: unichainSepolia.id,
         query: { refetchInterval: 1000 }
     })
 
     const [logs, setLogs] = useState<Log[]>([])
     const logsEndRef = useRef<HTMLDivElement>(null)
-    const prevPanicRef = useRef<boolean>(false)
+    const prevArmedRef = useRef<boolean>(false)
     const prevPriceRef = useRef<number>(2000)
 
     // Helper to add logs
@@ -58,13 +58,13 @@ export function NetworkMonitor() {
         if (!price) return
 
         const currentPrice = Number(formatEther(price as bigint))
-        const isPanic = panicMode === true
+        const isArmed = sentinelArmed === true
 
         // Detect Crash Start
         if (currentPrice < 1500 && prevPriceRef.current >= 1500) {
-            addLog(`CRASH DETECTED: Price $${currentPrice.toFixed(0)} < Threshold`, 'danger', 'SEPOLIA')
+            addLog(`EQUILIBRIUM BREACH: Market Divergence at $${currentPrice.toFixed(0)}`, 'danger', 'SEPOLIA')
             setTimeout(() => {
-                addLog(`Reactive Sentinel: Event Captured. Awaiting Consensus...`, 'warning', 'REACTIVE')
+                addLog(`Reactive Sentinel: L1 Gap Captured. Verifying...`, 'warning', 'REACTIVE')
             }, 1000)
             setTimeout(() => {
                 addLog(`Prime Logic: Confirmation 1/2 Received.`, 'info', 'REACTIVE')
@@ -72,29 +72,29 @@ export function NetworkMonitor() {
         }
 
         // Detect Panic Activation
-        if (isPanic && !prevPanicRef.current) {
-            addLog(`Callback Received: Consensus Verified (2/2)`, 'success', 'UNICHAIN')
-            addLog(`🛡️ AEGIS PRIME: 99% Security Tax Applied`, 'danger', 'UNICHAIN')
+        if (isArmed && !prevArmedRef.current) {
+            addLog(`Callback Received: Market Sync Verified`, 'success', 'UNICHAIN')
+            addLog(`🛡️ AEGIS PRIME: Shielding LPs via Divergence Offset`, 'success', 'UNICHAIN')
         }
 
         // Detect Recovery
         if (currentPrice >= 1500 && prevPriceRef.current < 1500) {
-            addLog(`Market Stabilized: ETH Price $${currentPrice.toFixed(0)}`, 'success', 'SEPOLIA')
+            addLog(`Market Equilibrium Restored: $${currentPrice.toFixed(0)}`, 'success', 'SEPOLIA')
             setTimeout(() => {
-                addLog(`Reactive Sentinel: Emitting 'Normal' Signal`, 'info', 'REACTIVE')
+                addLog(`Reactive Sentinel: Global Equilibrium Emitted`, 'info', 'REACTIVE')
             }, 500)
         }
 
         // Detect Panic Deactivation
-        if (!isPanic && prevPanicRef.current) {
-            addLog(`Callback Received: setPanicMode(false)`, 'success', 'UNICHAIN')
-            addLog(`✅ SHIELD DISABLED: Trading Resumed`, 'success', 'UNICHAIN')
+        if (!isArmed && prevArmedRef.current) {
+            addLog(`Callback Received: Normal Equilibrium restored`, 'success', 'UNICHAIN')
+            addLog(`✅ SHIELD STANDBY: Monitoring Market Pulses`, 'success', 'UNICHAIN')
         }
 
         prevPriceRef.current = currentPrice
-        prevPanicRef.current = isPanic
+        prevArmedRef.current = isArmed
 
-    }, [price, panicMode])
+    }, [price, sentinelArmed])
 
     return (
         <div className="glass-card rounded-2xl border border-white/5 overflow-hidden flex flex-col h-full min-h-[300px]">
