@@ -7,10 +7,10 @@ The Aegis system is a Reactive Circuit Breaker protecting liquidity across 3 cha
 
 | Component | Network | Address | Role |
 | :--- | :--- | :--- | :--- |
-| **MockOracle** | **Sepolia (L1)** | `0x1392C38921A818cEdb100cC3767e8f30deC3a7D8` | Price Feed Sim. |
-| **AegisHook** | **Unichain** | `0x1E2aE114cF3B63779A1367eD704ccA51a0218080` | Uniswap v4 Hook. |
-| **GuardianRegistry** | **Unichain** | `0xaDdf307296EFC3720D3e38E72d2A417327161cDb` | ERC-8004 Registry. |
-| **AegisSentinel**| **Lasna** | `0x0B6ae13119Fc3b61d6ABb115342A1A075e14b6B6` | Event-Driven Controller. |
+| **MockOracle** | **Sepolia (L1)** | `0xe7e31164b5b50a107dbab71de6edde5b7cb96c0d` | Price Feed Sim. |
+| **AegisHook** | **Unichain** | `0x71E998095a5830F5971c2589af26268Fc5B48080` | Uniswap v4 Hook. |
+| **GuardianRegistry** | **Unichain** | `0x17F1CfD993aCCC5E9190984835d4D07Dfb48d8e3` | ERC-8004 Registry. |
+| **AegisSentinel**| **Lasna** | `0xED6224cdC75A1FD962b0Bf462D754645DfFF1c02` | Event-Driven Controller. |
 
 ## 🛡️ Senior Refactor Highlights
 ### 1. Scalability Fix (Registry)
