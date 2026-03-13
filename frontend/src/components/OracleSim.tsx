@@ -80,8 +80,13 @@ export function OracleSim() {
                 <div className={`text-5xl font-black font-cyber tracking-tighter ${Number(currentPrice) < 1500 ? 'text-red-500 animate-glitch' : 'text-white'}`}>
                     ${currentPrice}
                 </div>
-                <div className="text-[9px] font-mono text-gray-600 mt-2 border-t border-white/5 pt-1 w-24 mx-auto">
-                    Threshold: $1,500
+                <div className="flex flex-col gap-1 mt-3 items-center">
+                    <div className="text-[9px] font-mono text-gray-600 border-t border-white/5 pt-1 w-24">
+                        Threshold: $1,500
+                    </div>
+                    <div className="text-[8px] font-mono text-indigo-400 bg-indigo-500/5 px-2 py-0.5 rounded border border-indigo-500/10 uppercase tracking-widest">
+                        Aegis Prime: 2-Step Verification
+                    </div>
                 </div>
             </div>
 

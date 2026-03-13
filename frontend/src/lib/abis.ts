@@ -88,6 +88,22 @@ export const AEGIS_GUARDIAN_REGISTRY_ABI = [
         "name": "giveFeedback",
         "outputs": [],
         "stateMutability": "nonpayable",
-        "type": "function"
+    }
+] as const;
+
+export const AEGIS_SENTINEL_ABI = [
+    {
+        "type": "function",
+        "name": "currentConfirmations",
+        "inputs": [],
+        "outputs": [{ "name": "", "type": "uint256", "internalType": "uint256" }],
+        "stateMutability": "view"
+    },
+    {
+        "type": "function",
+        "name": "MIN_CONFIRMATIONS",
+        "inputs": [],
+        "outputs": [{ "name": "", "type": "uint256", "internalType": "uint256" }],
+        "stateMutability": "view"
     }
 ] as const;

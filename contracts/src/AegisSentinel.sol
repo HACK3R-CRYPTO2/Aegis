@@ -15,11 +15,13 @@ contract AegisSentinel is AbstractReactive {
 
     // Pre-calculated topic hashes to avoid runtime keccak256 (Production Standard)
     uint256 private constant TOPIC_PRICE_UPDATE = 0xc25b2dced4384fb51ce018b01853e1c22dcfdf8b2c95ab0f8672e44b8b31f24c;
-    uint256 private constant TOPIC_FEEDBACK = 0x56a6401088bc92b8d009669528646b553e4f3a742886f4a24c076478d380724c;
+    uint256 private constant TOPIC_FEEDBACK = 0x6255e82cc5d38fd9ae9676f1beedee31dd8926eb0b9bfcd9e4c8f419b18d1643;
 
     // --- State ---
     address public immutable owner;
     address public immutable aegisHook;
+    uint256 public constant MIN_CONFIRMATIONS = 2; // Aegis Prime Consensus Requirement
+    uint256 public currentConfirmations;
 
     // --- Events ---
     event PanicTriggered(uint256 indexed price);
@@ -91,9 +93,17 @@ contract AegisSentinel is AbstractReactive {
 
     function _handlePriceUpdate(bytes calldata data) internal {
         (uint256 price, ) = abi.decode(data, (uint256, uint256));
+        
         if (price < CRASH_THRESHOLD) {
-            emit PanicTriggered(price);
-            _emitCallback(UNICHAIN_CHAIN_ID, aegisHook, abi.encodeWithSignature("setPanicMode(bool)", true));
+            currentConfirmations++;
+            if (currentConfirmations >= MIN_CONFIRMATIONS) {
+                emit PanicTriggered(price);
+                _emitCallback(UNICHAIN_CHAIN_ID, aegisHook, abi.encodeWithSignature("setPanicMode(bool)", true));
+            }
+        } else {
+            // Market Stabilized - Reset Consensus
+            currentConfirmations = 0;
+            _emitCallback(UNICHAIN_CHAIN_ID, aegisHook, abi.encodeWithSignature("setPanicMode(bool)", false));
         }
     }
 

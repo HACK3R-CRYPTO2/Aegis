@@ -62,22 +62,19 @@ export function NetworkMonitor() {
 
         // Detect Crash Start
         if (currentPrice < 1500 && prevPriceRef.current >= 1500) {
-            addLog(`CRASH DETECTED ETH Price $${currentPrice.toFixed(0)} < Threshold`, 'danger', 'SEPOLIA')
+            addLog(`CRASH DETECTED: Price $${currentPrice.toFixed(0)} < Threshold`, 'danger', 'SEPOLIA')
             setTimeout(() => {
-                addLog(`Orale Event Emitted: PriceUpdate(${currentPrice.toFixed(0)})`, 'warning', 'SEPOLIA')
-            }, 500)
-            setTimeout(() => {
-                addLog(`Reactive Sentinel: Event Captured. Processing...`, 'info', 'REACTIVE')
+                addLog(`Reactive Sentinel: Event Captured. Awaiting Consensus...`, 'warning', 'REACTIVE')
             }, 1000)
             setTimeout(() => {
-                addLog(`Reactive Relayer: Bridging 'Panic' Signal -> Unichain`, 'info', 'REACTIVE')
-            }, 1500)
+                addLog(`Prime Logic: Confirmation 1/2 Received.`, 'info', 'REACTIVE')
+            }, 2000)
         }
 
         // Detect Panic Activation
         if (isPanic && !prevPanicRef.current) {
-            addLog(`Callback Received: setPanicMode(true) executed`, 'danger', 'UNICHAIN')
-            addLog(`🛡️ SHIELD ACTIVATED: Pool Halted`, 'danger', 'UNICHAIN')
+            addLog(`Callback Received: Consensus Verified (2/2)`, 'success', 'UNICHAIN')
+            addLog(`🛡️ AEGIS PRIME: 99% Security Tax Applied`, 'danger', 'UNICHAIN')
         }
 
         // Detect Recovery

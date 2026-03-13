@@ -1,11 +1,11 @@
 'use client'
 
 import { useReadContract } from 'wagmi'
-import { AEGIS_HOOK_ABI } from '../lib/abis'
-import { DEPLOYED_ADDRESSES } from '../lib/addresses'
-import { unichainSepolia } from '../lib/config'
+import { AEGIS_HOOK_ABI, AEGIS_SENTINEL_ABI } from '../lib/abis'
+import { DEPLOYED_ADDRESSES, CHAINS } from '../lib/addresses'
+import { unichainSepolia, reactiveLasna } from '../lib/config'
 import { useState, useEffect } from 'react'
-import { Shield, AlertTriangle, CheckCircle } from 'lucide-react'
+import { Shield, AlertTriangle, CheckCircle, Activity } from 'lucide-react'
 
 export function StatusCard() {
     const { data: panicMode, isError, isLoading } = useReadContract({
@@ -14,7 +14,17 @@ export function StatusCard() {
         functionName: 'panicMode',
         chainId: unichainSepolia.id,
         query: {
-            refetchInterval: 2000 // Poll every 2 seconds
+            refetchInterval: 1000
+        }
+    })
+
+    const { data: confirmations } = useReadContract({
+        address: DEPLOYED_ADDRESSES.AEGIS_SENTINEL as `0x${string}`,
+        abi: AEGIS_SENTINEL_ABI,
+        functionName: 'currentConfirmations',
+        chainId: CHAINS.LASNA, // Reactive Network
+        query: {
+            refetchInterval: 1000
         }
     })
 
@@ -46,14 +56,31 @@ export function StatusCard() {
                 <div className="flex items-center gap-3">
                     <div className={`w-3 h-3 rounded-full ${isPanic ? 'bg-red-500 animate-ping' : 'bg-neon-green shadow-[0_0_10px_#10b981]'}`} />
                     <span className={`text-2xl font-cyber font-bold ${isPanic ? 'text-red-500 animate-glitch' : 'text-neon-cyan'}`}>
-                        {isLoading ? "INITIALIZING..." : isPanic ? "PANIC ACTIVE" : "SYSTEM ONLINE"}
+                        {isLoading ? "INITIALIZING..." : isPanic ? "AEGIS PRIME ACTIVE" : "SYSTEM ONLINE"}
                     </span>
                 </div>
 
-                <div className={`text-xs font-mono border-l-2 pl-3 py-1 ${isPanic ? 'border-red-500 text-red-400' : 'border-neon-cyan/30 text-gray-400'}`}>
+                {/* Prime Metrics */}
+                <div className="grid grid-cols-2 gap-2 mt-1">
+                    <div className="bg-black/40 border border-white/5 p-2 rounded-lg">
+                        <div className="text-[8px] text-gray-500 uppercase tracking-tighter mb-1">Security Tax</div>
+                        <div className={`text-sm font-mono font-bold ${isPanic ? 'text-red-400' : 'text-gray-400'}`}>
+                            {isPanic ? "99.0%" : "0.0%"}
+                        </div>
+                    </div>
+                    <div className="bg-black/40 border border-white/5 p-2 rounded-lg">
+                        <div className="text-[8px] text-gray-500 uppercase tracking-tighter mb-1">Consensus</div>
+                        <div className={`text-sm font-mono font-bold flex items-center gap-1.5 ${Number(confirmations) > 0 ? 'text-yellow-400' : 'text-gray-400'}`}>
+                            <Activity className={`w-3 h-3 ${Number(confirmations) > 0 ? 'animate-pulse' : ''}`} />
+                            {confirmations?.toString() || "0"}/2
+                        </div>
+                    </div>
+                </div>
+
+                <div className={`text-[10px] font-mono border-l-2 pl-3 py-1 mt-2 ${isPanic ? 'border-red-500 text-red-400' : 'border-neon-cyan/30 text-gray-400'}`}>
                     {isPanic
-                        ? "CRITICAL THREAT. POOLS LOCKED."
-                        : "No active threats. Reactive Listeners standing by."}
+                        ? "99% DEFENSE TAX REDISTRIBUTING ARB VALUE."
+                        : "Sentinel Consensus: Waiting for secondary price breach."}
                 </div>
             </div>
 

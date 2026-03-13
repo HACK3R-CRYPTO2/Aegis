@@ -19,6 +19,8 @@ contract AegisSentinelTest is Test {
         bytes payload
     );
 
+    event AgentReputationBoosted(address indexed agent, uint256 score);
+
     function setUp() public {
         sentinel = new AegisSentinel(address(0), hook, mockOracle);
     }
@@ -51,7 +53,7 @@ contract AegisSentinelTest is Test {
         );
 
         IReactive.LogRecord memory log = IReactive.LogRecord({
-            chain_id: 11155111, // Sepolia
+            chain_id: 1301, // Unichain
             _contract: registry,
             topic_0: uint256(topic0),
             topic_1: uint256(topic1),
@@ -72,11 +74,47 @@ contract AegisSentinelTest is Test {
             100 // Trusted Score
         );
 
+        vm.expectEmit(true, false, false, true);
+        emit AgentReputationBoosted(agent, 100);
+
         vm.expectEmit(true, true, true, true);
         emit Callback(1301, hook, 1000000, expectedPayload);
 
         // 3. Call react
         vm.prank(address(0)); // vmOnly
         sentinel.react(log);
+    function test_ReactToPriceUpdate_Consensus() public {
+        // 1. First breach - No callback yet
+        IReactive.LogRecord memory log = _createPriceLog(1000 ether);
+        
+        vm.prank(address(0));
+        sentinel.react(log);
+        assertEq(sentinel.currentConfirmations(), 1);
+
+        // 2. Second breach - Trigger Callback
+        bytes memory expectedPayload = abi.encodeWithSignature("setPanicMode(bool)", true);
+        vm.expectEmit(true, true, true, true);
+        emit Callback(1301, hook, 1000000, expectedPayload);
+
+        vm.prank(address(0));
+        sentinel.react(log);
+        assertEq(sentinel.currentConfirmations(), 2);
+    }
+
+    function _createPriceLog(uint256 price) internal view returns (IReactive.LogRecord memory) {
+         return IReactive.LogRecord({
+            chain_id: 11155111,
+            _contract: mockOracle,
+            topic_0: 0xc25b2dced4384fb51ce018b01853e1c22dcfdf8b2c95ab0f8672e44b8b31f24c,
+            topic_1: 0,
+            topic_2: 0,
+            topic_3: 0,
+            data: abi.encode(price, block.timestamp),
+            block_number: 12345,
+            op_code: 1,
+            block_hash: 0,
+            tx_hash: 0,
+            log_index: 0
+        });
     }
 }

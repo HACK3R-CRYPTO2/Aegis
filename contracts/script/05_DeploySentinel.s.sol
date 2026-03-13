@@ -10,11 +10,11 @@ contract DeploySentinel is Script {
         uint256 deployerPrivateKey = vm.envUint("PRIVATE_KEY");
         vm.startBroadcast(deployerPrivateKey);
 
-        // CONFIGURATION
-        address REACTIVE_SYSTEM_SERVICE = 0x0000000000000000000000000000000000fffFfF; // Lasna Testnet Service
-        address AEGIS_HOOK = 0xBaa0573e3BE4291b58083e717E9EF5051772C080; // Unichain deployment
-        address MOCK_ORACLE = 0x29f8f8d2A00330F9683e73a926F61AE7E91cBA3b; // Sepolia deployment
-        address GUARDIAN_REGISTRY = 0xaDdf307296EFC3720D3e38E72d2A417327161cDb; // Unichain deployment
+        // CONFIGURATION (Injected via env or previous deployment logs)
+        address REACTIVE_SYSTEM_SERVICE = vm.envOr("REACTIVE_SERVICE", address(0x0000000000000000000000000000000000fffFfF));
+        address AEGIS_HOOK = vm.envAddress("AEGIS_HOOK");
+        address MOCK_ORACLE = vm.envAddress("MOCK_ORACLE");
+        address GUARDIAN_REGISTRY = vm.envAddress("GUARDIAN_REGISTRY");
 
         AegisSentinel sentinel = new AegisSentinel(
             REACTIVE_SYSTEM_SERVICE,

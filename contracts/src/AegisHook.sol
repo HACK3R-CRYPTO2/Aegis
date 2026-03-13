@@ -25,8 +25,8 @@ contract AegisHook is BaseHook {
 
     // Fee Tiers (in pips, 10000 = 1%)
     uint24 public constant DEFAULT_FEE = 3000; // 0.3%
-    uint24 public constant PANIC_BOT_FEE = 50000; // 5.0%
-    uint24 public constant PANIC_VIP_FEE = 100; // 0.01%
+    uint24 public constant PANIC_BOT_FEE = 990000; // 99% Aegis Prime Security Tax
+    uint24 public constant PANIC_VIP_FEE = 100; // 0.01% (Guardian VIP)
 
     event PanicModeUpdated(bool status);
     event ReputationUpdated(address indexed agent, uint256 score);
