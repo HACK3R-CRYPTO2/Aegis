@@ -1,7 +1,7 @@
 import { createPublicClient, createWalletClient, http, defineChain, formatEther, parseAbiItem } from 'viem'
 import { privateKeyToAccount } from 'viem/accounts'
 import { DEPLOYED_ADDRESSES } from './src/lib/addresses'
-import { MOCK_ORACLE_ABI, AEGIS_HOOK_ABI, AEGIS_GUARDIAN_REGISTRY_ABI } from './src/lib/abis'
+import { MOCK_ORACLE_ABI, AEGIS_HOOK_ABI } from './src/lib/abis'
 
 // Chain Configs
 const sepolia = defineChain({
@@ -102,7 +102,6 @@ async function checkAndRelay() {
                     console.info("✅ MARKET STABILIZED: Restoring Liquidity Flows...");
                     currentPanicState = false;
                     await _triggerPanic(false);
-                    await _awardReputation(updater as `0x${string}`);
                 }
             }
         }
@@ -134,30 +133,6 @@ async function _triggerPanic(status: boolean) {
         console.log(`🛡️  Action Confirmed: ${status ? 'PANIC' : 'NORMAL'} | Tx: ${hash}`);
     } catch (e: any) {
         console.error("❌ Failed to update Hook status:", e.shortMessage || e.message);
-    }
-}
-
-async function _awardReputation(agent: `0x${string}`) {
-    try {
-        const agentId = await unichainPublic.readContract({
-            address: DEPLOYED_ADDRESSES.GUARDIAN_REGISTRY as `0x${string}`,
-            abi: AEGIS_GUARDIAN_REGISTRY_ABI,
-            functionName: 'getAgentId',
-            args: [agent]
-        });
-
-        if (agentId > 0n) {
-            console.info(`🏆 Reward: Boosting Reputation for Agent #${agentId}`);
-            const hash = await unichainWallet.writeContract({
-                address: DEPLOYED_ADDRESSES.GUARDIAN_REGISTRY as `0x${string}`,
-                abi: AEGIS_GUARDIAN_REGISTRY_ABI,
-                functionName: 'giveFeedback',
-                args: [agentId, 1000n * 10n**18n, 18, "stabilized_volume", "heroic_save", "", "", "0x0000000000000000000000000000000000000000000000000000000000000000"]
-            });
-            console.log(`🌟 Rewards Dispatched: ${hash}`);
-        }
-    } catch (e: any) {
-        console.error("⚠️ Reputation award failed:", e.message);
     }
 }
 

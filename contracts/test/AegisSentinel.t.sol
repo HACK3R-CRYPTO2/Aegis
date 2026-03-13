@@ -83,6 +83,8 @@ contract AegisSentinelTest is Test {
         // 3. Call react
         vm.prank(address(0)); // vmOnly
         sentinel.react(log);
+    }
+
     function test_ReactToPriceUpdate_Consensus() public {
         // 1. First breach - No callback yet
         IReactive.LogRecord memory log = _createPriceLog(1000 ether);

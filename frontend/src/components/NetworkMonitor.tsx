@@ -155,9 +155,9 @@ export function NetworkMonitor() {
                     <Zap className="w-3 h-3 text-purple-500" />
                     <span className="text-purple-400/80">Reactive</span>
                 </div>
-                <div className="flex items-center gap-1.5">
+                <div className="flex items-center gap-1.5 grayscale hover:grayscale-0 transition-all">
                     <ShieldCheck className="w-3 h-3 text-pink-500" />
-                    <span className="text-pink-400/80">Unichain</span>
+                    <span className="text-pink-400/80 font-cyber">Aegis Prime</span>
                 </div>
             </div>
         </div>

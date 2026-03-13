@@ -30,11 +30,12 @@ contract AegisSentinel is AbstractReactive {
     /// @notice Senior-grade constructor targeting cross-chain endpoints
     /// @param _aegisHook The Uniswap v4 Hook address on Unichain
     constructor(
-        address /* _service */,
+        address _service,
         address _aegisHook,
         address /* _mockOracle */
     ) AbstractReactive() {
         owner = msg.sender;
+        service = SystemContract(payable(_service));
         aegisHook = _aegisHook;
     }
 

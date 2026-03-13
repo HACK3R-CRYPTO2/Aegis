@@ -18,19 +18,11 @@ contract AegisHook is BaseHook {
     address public reactiveSentinel;
     address public immutable owner;
 
-    mapping(address => uint256) public agentReputation;
-    mapping(address => string) public agentNames;
-    address public guardianRegistry;
-    uint256 public constant REPUTATION_THRESHOLD = 90;
-
     // Fee Tiers (in pips, 10000 = 1%)
     uint24 public constant DEFAULT_FEE = 3000; // 0.3%
     uint24 public constant PANIC_BOT_FEE = 990000; // 99% Aegis Prime Security Tax
-    uint24 public constant PANIC_VIP_FEE = 100; // 0.01% (Guardian VIP)
 
     event PanicModeUpdated(bool status);
-    event ReputationUpdated(address indexed agent, uint256 score);
-    event AgentNameRegistered(address indexed agent, string name);
     error OnlySentinel();
     error PoolPaused();
 
@@ -47,33 +39,9 @@ contract AegisHook is BaseHook {
         _;
     }
 
-    function setAgentReputation(
-        address _agent,
-        uint256 _score
-    ) external onlySentinelOrOwner {
-        agentReputation[_agent] = _score;
-        emit ReputationUpdated(_agent, _score);
-    }
-
-    /// @notice Allows an agent to register a human-readable name
-    function registerAgentName(string calldata _name) external {
-        // Basic length validation
-        require(
-            bytes(_name).length > 0 && bytes(_name).length < 32,
-            "Invalid name length"
-        );
-        agentNames[msg.sender] = _name;
-        emit AgentNameRegistered(msg.sender, _name);
-    }
-
     function setSentinel(address _sentinel) external {
         if (msg.sender != owner) revert OnlySentinel();
         reactiveSentinel = _sentinel;
-    }
-
-    function setGuardianRegistry(address _registry) external {
-        if (msg.sender != owner) revert OnlySentinel();
-        guardianRegistry = _registry;
     }
 
     function setPanicMode(bool _status) external onlySentinelOrOwner {
@@ -114,24 +82,13 @@ contract AegisHook is BaseHook {
     function _beforeSwap(
         address,
         PoolKey calldata,
-        SwapParams calldata params,
+        SwapParams calldata,
         bytes calldata
     ) internal override returns (bytes4, BeforeSwapDelta, uint24) {
         uint24 fee = DEFAULT_FEE;
 
         if (panicMode) {
-            // Senior optimization: Use EIP-8004 identity for tiered fees
-            // Check reputation of tx.origin (standard for agents)
-            if (agentReputation[tx.origin] >= REPUTATION_THRESHOLD) {
-                fee = PANIC_VIP_FEE;
-
-                // Gas Optimization: Only call registry if volume is significant or for metrics
-                if (guardianRegistry != address(0)) {
-                    _recordHeroicIntervention(tx.origin, params.amountSpecified);
-                }
-            } else {
-                fee = PANIC_BOT_FEE;
-            }
+            fee = PANIC_BOT_FEE;
         }
 
         // Return with dynamic fee flag (0x800000) to allow hook-defined fees
@@ -140,33 +97,5 @@ contract AegisHook is BaseHook {
             BeforeSwapDeltaLibrary.ZERO_DELTA,
             fee | 0x800000
         );
-    }
-
-    /// @dev Internal helper to record intervention volume (Agentic Metrics)
-    function _recordHeroicIntervention(address agent, int256 amount) internal {
-        (bool successId, bytes memory dataId) = guardianRegistry.staticcall(
-            abi.encodeWithSignature("getAgentId(address)", agent)
-        );
-
-        if (successId && dataId.length == 32) {
-            uint256 agentId = abi.decode(dataId, (uint256));
-            if (agentId > 0) {
-                uint256 volume = amount > 0 ? uint256(amount) : uint256(-amount);
-                // Non-blocking call to giveFeedback
-                guardianRegistry.call(
-                    abi.encodeWithSignature(
-                        "giveFeedback(uint256,int128,uint8,string,string,string,string,bytes32)",
-                        agentId,
-                        int128(int256(volume)),
-                        18,
-                        "stabilized_volume",
-                        "panic_mode",
-                        "",
-                        "",
-                        bytes32(0)
-                    )
-                );
-            }
-        }
     }
 }

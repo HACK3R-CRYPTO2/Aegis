@@ -3,7 +3,6 @@ import { OracleSim } from '../components/OracleSim'
 import { TradingView } from '../components/TradingView'
 import { NetworkMonitor } from '../components/NetworkMonitor'
 import { ConnectButton } from '../components/ConnectButton'
-import { ReputationDashboard } from '../components/ReputationDashboard'
 import { ShieldCheck } from 'lucide-react'
 
 export default function Home() {
@@ -25,7 +24,7 @@ export default function Home() {
             </div>
             <div>
               <h1 className="text-3xl font-black tracking-tight font-cyber bg-clip-text text-transparent bg-gradient-to-r from-white via-white to-gray-400">
-                AEGIS
+                AEGIS <span className="text-neon-purple drop-shadow-[0_0_15px_rgba(168,85,247,0.5)]">PRIME</span>
               </h1>
             </div>
           </div>
@@ -79,16 +78,11 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Center Column (6) - The Action */}
-          <div className="lg:col-span-6 flex flex-col gap-4 overflow-y-auto px-1 scrollbar-hide">
+          {/* Center Column (9) - The Action */}
+          <div className="lg:col-span-9 flex flex-col gap-4 overflow-y-auto px-1 scrollbar-hide">
             {/* Trading View - Centered vertically if space allows, or at top */}
             <div className="flex-1 flex flex-col justify-center">
               <TradingView />
-            </div>
-
-            {/* Reputation - Below Trading View */}
-            <div>
-              <ReputationDashboard />
             </div>
           </div>
 

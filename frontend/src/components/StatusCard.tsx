@@ -60,27 +60,44 @@ export function StatusCard() {
                     </span>
                 </div>
 
-                {/* Prime Metrics */}
-                <div className="grid grid-cols-2 gap-2 mt-1">
-                    <div className="bg-black/40 border border-white/5 p-2 rounded-lg">
-                        <div className="text-[8px] text-gray-500 uppercase tracking-tighter mb-1">Security Tax</div>
-                        <div className={`text-sm font-mono font-bold ${isPanic ? 'text-red-400' : 'text-gray-400'}`}>
-                            {isPanic ? "99.0%" : "0.0%"}
+                {/* Prime Metrics & Progress */}
+                <div className="flex flex-col gap-3 mt-2">
+                    <div className="flex flex-col gap-1.5">
+                        <div className="flex justify-between items-end">
+                            <span className="text-[8px] text-gray-500 uppercase tracking-widest font-cyber">Sentinel Consensus</span>
+                            <span className={`text-[10px] font-mono ${Number(confirmations) > 0 ? 'text-yellow-400' : 'text-gray-500'}`}>
+                                {confirmations?.toString() || "0"}/2 Verified
+                            </span>
+                        </div>
+                        <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden flex gap-1 border border-white/5 p-[1px]">
+                            <div className={`h-full flex-1 rounded-full transition-all duration-700 ${Number(confirmations) >= 1 ? 'bg-yellow-500 shadow-[0_0_10px_rgba(234,179,8,0.5)]' : 'bg-white/5'}`} />
+                            <div className={`h-full flex-1 rounded-full transition-all duration-700 ${Number(confirmations) >= 2 ? 'bg-red-500 shadow-[0_0_10px_rgba(239,68,68,0.5)]' : 'bg-white/5'}`} />
                         </div>
                     </div>
-                    <div className="bg-black/40 border border-white/5 p-2 rounded-lg">
-                        <div className="text-[8px] text-gray-500 uppercase tracking-tighter mb-1">Consensus</div>
-                        <div className={`text-sm font-mono font-bold flex items-center gap-1.5 ${Number(confirmations) > 0 ? 'text-yellow-400' : 'text-gray-400'}`}>
-                            <Activity className={`w-3 h-3 ${Number(confirmations) > 0 ? 'animate-pulse' : ''}`} />
-                            {confirmations?.toString() || "0"}/2
+
+                    <div className="grid grid-cols-2 gap-2">
+                        <div className="bg-black/40 border border-white/5 p-2 rounded-lg group hover:border-red-500/30 transition-colors">
+                            <div className="text-[8px] text-gray-500 uppercase tracking-tighter mb-1 font-cyber">Security Tax</div>
+                            <div className={`text-sm font-mono font-bold ${isPanic ? 'text-red-400' : 'text-gray-400'}`}>
+                                {isPanic ? "99.0%" : "0.0%"}
+                            </div>
+                        </div>
+                        <div className="bg-black/40 border border-white/5 p-2 rounded-lg group hover:border-neon-cyan/30 transition-colors">
+                            <div className="text-[8px] text-gray-500 uppercase tracking-tighter mb-1 font-cyber">Sentinel Type</div>
+                            <div className="text-[10px] font-mono font-bold text-indigo-400 flex items-center gap-1">
+                                <Activity className="w-2.5 h-2.5" />
+                                AUTONOMOUS
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                <div className={`text-[10px] font-mono border-l-2 pl-3 py-1 mt-2 ${isPanic ? 'border-red-500 text-red-400' : 'border-neon-cyan/30 text-gray-400'}`}>
+                <div className={`text-[10px] font-mono border-l-2 pl-3 py-1 mt-2 ${isPanic ? 'border-red-500 text-red-400 backdrop-blur-sm' : 'border-neon-cyan/30 text-gray-400'}`}>
                     {isPanic
-                        ? "99% DEFENSE TAX REDISTRIBUTING ARB VALUE."
-                        : "Sentinel Consensus: Waiting for secondary price breach."}
+                        ? "99% SECURITY TAX ACTIVATED. PROTECTING LPs."
+                        : Number(confirmations) === 1 
+                            ? "L1 BREACH DETECTED. AWAITING SECONDARY VERIFICATION..."
+                            : "Waiting for market outlier to trigger consensus."}
                 </div>
             </div>
 
