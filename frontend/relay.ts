@@ -47,8 +47,13 @@ const POLLING_INTERVAL = 3000;
 const MAX_BLOCK_RANGE = 100; // Adaptive fallback
 const START_OFFSET = 50n;
 let lastProcessedBlock = 0n;
+let isRelaying = false;
+let currentPanicState: boolean | null = null;
 
 async function checkAndRelay() {
+    if (isRelaying) return;
+    isRelaying = true;
+
     try {
         const currentBlock = await sepoliaClient.getBlockNumber();
         if (lastProcessedBlock === 0n) {
@@ -57,14 +62,12 @@ async function checkAndRelay() {
 
         if (currentBlock <= lastProcessedBlock) return;
 
-        // Adaptive Block Range: Handle RPC limits elegantly
         const toBlock = currentBlock > lastProcessedBlock + BigInt(MAX_BLOCK_RANGE) 
             ? lastProcessedBlock + BigInt(MAX_BLOCK_RANGE) 
             : currentBlock;
 
         console.log(`🔍 Polling Sepolia range: [${lastProcessedBlock + 1n} - ${toBlock}]`);
 
-        // 1. Get Price Updates from MockOracle
         const logs = await sepoliaClient.getLogs({
             address: DEPLOYED_ADDRESSES.MOCK_ORACLE as `0x${string}`,
             event: parseAbiItem('event PriceUpdate(uint256 indexed newPrice, uint256 timestamp, address indexed updater)'),
@@ -75,6 +78,14 @@ async function checkAndRelay() {
         if (logs.length > 0) {
             console.log(`\n📨 Found ${logs.length} new Price Updates!`);
             
+            if (currentPanicState === null) {
+                currentPanicState = await unichainPublic.readContract({
+                    address: DEPLOYED_ADDRESSES.AEGIS_HOOK as `0x${string}`,
+                    abi: AEGIS_HOOK_ABI,
+                    functionName: 'panicMode'
+                });
+            }
+
             for (const log of logs) {
                 const { newPrice, updater } = (log as any).args;
                 const ethPrice = formatEther(newPrice);
@@ -82,20 +93,14 @@ async function checkAndRelay() {
 
                 console.log(`   -> Signal: $${ethPriceFixed} | Source: ${updater}`);
 
-                // Check Panic Mode on Unichain
-                const isPanic = await unichainPublic.readContract({
-                    address: DEPLOYED_ADDRESSES.AEGIS_HOOK as `0x${string}`,
-                    abi: AEGIS_HOOK_ABI,
-                    functionName: 'panicMode'
-                });
-
-                // Senior Logic: Targeted Intervention
-                if (Number(ethPriceFixed) < 1500 && !isPanic) {
+                if (Number(ethPriceFixed) < 1500 && !currentPanicState) {
                     console.warn("🚨 THRESHOLD BREACHED: Activating Aegis Circuit Breaker...");
+                    currentPanicState = true; 
                     await _triggerPanic(true);
                 } 
-                else if (Number(ethPriceFixed) >= 1500 && isPanic) {
+                else if (Number(ethPriceFixed) >= 1500 && currentPanicState) {
                     console.info("✅ MARKET STABILIZED: Restoring Liquidity Flows...");
+                    currentPanicState = false;
                     await _triggerPanic(false);
                     await _awardReputation(updater as `0x${string}`);
                 }
@@ -106,12 +111,13 @@ async function checkAndRelay() {
 
     } catch (e: any) {
         process.stdout.write("⚠️");
-        // Senior Logging: Silent retries for network transient issues
         if (e.message.includes("429") || e.message.includes("fetch")) {
-            // Transient network error, wait for next cycle
+            // Transient error
         } else {
             console.error("\n❌ Critical Relay Error:", e.message);
         }
+    } finally {
+        isRelaying = false;
     }
 }
 
