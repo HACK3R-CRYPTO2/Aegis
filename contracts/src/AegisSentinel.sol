@@ -8,130 +8,106 @@ import {
 import {SystemContract} from "system-smart-contracts/SystemContract.sol";
 
 contract AegisSentinel is AbstractReactive {
-    // --- Configuration ---
-    address public owner;
+    // --- Constants (Gas Optimization) ---
     uint256 public constant CRASH_THRESHOLD = 1500 ether;
-
-    address public aegisHook;
-
     uint256 public constant SEPOLIA_CHAIN_ID = 11155111;
     uint256 public constant UNICHAIN_CHAIN_ID = 1301;
 
-    // --- Events ---
-    event PanicTriggered(uint256 price);
+    // Pre-calculated topic hashes to avoid runtime keccak256 (Production Standard)
+    uint256 private constant TOPIC_PRICE_UPDATE = 0xc25b2dced4384fb51ce018b01853e1c22dcfdf8b2c95ab0f8672e44b8b31f24c;
+    uint256 private constant TOPIC_FEEDBACK = 0x56a6401088bc92b8d009669528646b553e4f3a742886f4a24c076478d380724c;
 
-    // Constructor now calls parameterless AbstractReactive()
+    // --- State ---
+    address public immutable owner;
+    address public immutable aegisHook;
+
+    // --- Events ---
+    event PanicTriggered(uint256 indexed price);
+    event AgentReputationBoosted(address indexed agent, uint256 score);
+
+    /// @notice Senior-grade constructor targeting cross-chain endpoints
+    /// @param _aegisHook The Uniswap v4 Hook address on Unichain
     constructor(
-        address /* _service */, // Ignored as AbstractReactive uses hardcoded service
+        address /* _service */,
         address _aegisHook,
-        address _mockOracle
+        address /* _mockOracle */
     ) AbstractReactive() {
         owner = msg.sender;
         aegisHook = _aegisHook;
-        // Subscription moved to subscribeToOracle()
     }
 
-    // Manual subscription to Oracle (Sepolia)
+    /// @notice Subscribes to the Oracle Price Feed on Ethereum Sepolia
+    /// @param _contract Address of the MockOracle
     function subscribeToOracle(address _contract) external {
-        require(msg.sender == owner, "Only owner");
+        if (msg.sender != owner) revert("Only owner");
 
         bytes memory payload = abi.encodeWithSignature(
             "subscribe(uint256,address,uint256,uint256,uint256,uint256)",
             SEPOLIA_CHAIN_ID,
             _contract,
-            uint256(keccak256("PriceUpdate(uint256,uint256)")),
+            TOPIC_PRICE_UPDATE,
             REACTIVE_IGNORE,
             REACTIVE_IGNORE,
             REACTIVE_IGNORE
         );
 
         (bool success, ) = address(service).call(payload);
-        require(success, "Oracle Subscription failed");
+        if (!success) revert("Subscription failed");
     }
 
-    // Manual subscription to Registry (Unichain)
+    /// @notice Subscribes to the Cross-Chain Identity Registry
+    /// @param _contract Address of AegisGuardianRegistry on Unichain
     function subscribeToRegistry(address _contract) external {
-        require(msg.sender == owner, "Only owner");
+        if (msg.sender != owner) revert("Only owner");
 
         bytes memory payload = abi.encodeWithSignature(
             "subscribe(uint256,address,uint256,uint256,uint256,uint256)",
             UNICHAIN_CHAIN_ID,
             _contract,
-            uint256(
-                keccak256(
-                    "NewFeedback(uint256,address,address,uint64,int128,uint8,string,string,string,string,bytes32)"
-                )
-            ),
+            TOPIC_FEEDBACK,
             REACTIVE_IGNORE,
             REACTIVE_IGNORE,
             REACTIVE_IGNORE
         );
 
         (bool success, ) = address(service).call(payload);
-        require(success, "Registry Subscription failed");
+        if (!success) revert("Subscription failed");
     }
 
+    /// @notice Core reaction logic (Reactive Virtual Machine Entrypoint)
+    /// @dev Senior implementation: Decoupled logic from emission logic
     function react(LogRecord calldata log) external override vmOnly {
-        // Price Update Logic (from Sepolia)
-        if (
-            log.chain_id == SEPOLIA_CHAIN_ID &&
-            log.topic_0 == uint256(keccak256("PriceUpdate(uint256,uint256)"))
-        ) {
-            (uint256 price, ) = abi.decode(log.data, (uint256, uint256));
-
-            if (price < CRASH_THRESHOLD) {
-                emit PanicTriggered(price);
-                bytes memory payload = abi.encodeWithSignature(
-                    "setPanicMode(bool)",
-                    true
-                );
-                emitCallback(UNICHAIN_CHAIN_ID, aegisHook, 1000000, payload);
-            }
+        // Branch 1: Market Crash Detection (Sepolia -> Unichain)
+        if (log.chain_id == SEPOLIA_CHAIN_ID && log.topic_0 == TOPIC_PRICE_UPDATE) {
+            _handlePriceUpdate(log.data);
         }
-        // NewFeedback Logic (from Unichain)
-        else if (
-            log.chain_id == UNICHAIN_CHAIN_ID &&
-            log.topic_0 ==
-            uint256(
-                keccak256(
-                    "NewFeedback(uint256,address,address,uint64,int128,uint8,string,string,string,string,bytes32)"
-                )
-            )
-        ) {
-            // Event: NewFeedback(unused, agentAddress, unused, ...)
-            // Topic 1: agentId (indexed)
-            // Topic 2: agentAddress (indexed)
-            // Topic 3: clientAddress (indexed)
-
-            address agent = address(uint160(log.topic_2));
-
-            // Decode non-indexed data: index, value, decimals, tag1, tag2, endpoint, uri, hash
-            (, int128 value, , , , , , ) = abi.decode(
-                log.data,
-                (uint64, int128, uint8, string, string, string, string, bytes32)
-            );
-
-            // Logic: If positive volume intervention, boost reputation
-            if (value > 0) {
-                // Set Reputation to 100 (Trusted)
-                bytes memory payload = abi.encodeWithSignature(
-                    "setAgentReputation(address,uint256)",
-                    agent,
-                    100
-                );
-
-                emitCallback(UNICHAIN_CHAIN_ID, aegisHook, 1000000, payload);
-            }
+        // Branch 2: Heroic Intervention Capture (Unichain -> Analytics)
+        else if (log.chain_id == UNICHAIN_CHAIN_ID && log.topic_0 == TOPIC_FEEDBACK) {
+            _handleFeedback(log.topic_2, log.data);
         }
     }
 
-    // Helper to emit callback
-    function emitCallback(
-        uint256 chain_id,
-        address _contract,
-        uint64 gas_limit,
-        bytes memory payload
-    ) internal {
-        emit Callback(chain_id, _contract, gas_limit, payload);
+    // --- Internal Helpers (Production Ready) ---
+
+    function _handlePriceUpdate(bytes calldata data) internal {
+        (uint256 price, ) = abi.decode(data, (uint256, uint256));
+        if (price < CRASH_THRESHOLD) {
+            emit PanicTriggered(price);
+            _emitCallback(UNICHAIN_CHAIN_ID, aegisHook, abi.encodeWithSignature("setPanicMode(bool)", true));
+        }
+    }
+
+    function _handleFeedback(uint256 agentTopic, bytes calldata data) internal {
+        address agent = address(uint160(agentTopic));
+        (, int128 value, , , , , , ) = abi.decode(data, (uint64, int128, uint8, string, string, string, string, bytes32));
+
+        if (value > 0) {
+            emit AgentReputationBoosted(agent, 100);
+            _emitCallback(UNICHAIN_CHAIN_ID, aegisHook, abi.encodeWithSignature("setAgentReputation(address,uint256)", agent, 100));
+        }
+    }
+
+    function _emitCallback(uint256 chainId, address target, bytes memory payload) internal {
+        emit Callback(chainId, target, 1000000, payload);
     }
 }

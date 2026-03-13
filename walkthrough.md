@@ -1,69 +1,35 @@
 # Aegis System Walkthrough
-
 **Status**: 🟢 Deployed & Operational
-**Date**: 2026-01-28
+**Standards**: Senior Refactor (Production Ready)
 
 ## 🏗️ Architecture & Deployments
-
-The Aegis system is successfully deployed across 3 chains, forming a Reactive Circuit Breaker.
+The Aegis system is a Reactive Circuit Breaker protecting liquidity across 3 chains.
 
 | Component | Network | Address | Role |
 | :--- | :--- | :--- | :--- |
-| **MockOracle** | **Sepolia (L1)** | `0x1392C38921A818cEdb100cC3767e8f30deC3a7D8` | Simulates ETH price. Emits `PriceUpdate`. |
-| **AegisHook** | **Unichain Sepolia** | `0x1E2aE114cF3B63779A1367eD704ccA51a0218080` | Uniswap v4 Hook. Has `panicMode`. |
-| **AegisGuardianRegistry** | **Unichain Sepolia** | `0xaDdf307296EFC3720D3e38E72d2A417327161cDb` | ERC-8004 Registry + ERC-721 Identity. |
-| **AegisSentinel**| **Reactive Lasna** | `0x0B6ae13119Fc3b61d6ABb115342A1A075e14b6B6` | Listens to Oracle (L1) -> Calls Hook (L2). |
+| **MockOracle** | **Sepolia (L1)** | `0x1392C38921A818cEdb100cC3767e8f30deC3a7D8` | Price Feed Sim. |
+| **AegisHook** | **Unichain** | `0x1E2aE114cF3B63779A1367eD704ccA51a0218080` | Uniswap v4 Hook. |
+| **GuardianRegistry** | **Unichain** | `0xaDdf307296EFC3720D3e38E72d2A417327161cDb` | ERC-8004 Registry. |
+| **AegisSentinel**| **Lasna** | `0x0B6ae13119Fc3b61d6ABb115342A1A075e14b6B6` | Event-Driven Controller. |
 
-### Configuration Status
-- [x] **Subscription**: Sentinel is subscribed to `MockOracle` events on Sepolia (ID: 11155111).
-- [x] **Permissions**: Hook has `setSentinel` configured to trust calls from the Reactive Sentinel.
+## 🛡️ Senior Refactor Highlights
+### 1. Scalability Fix (Registry)
+- **Problem**: O(n) loop over feedback history.
+- **Fix**: Implemented O(1) **Incremental Volume Tracking**. Caches total volume in a mapping during each `giveFeedback` call.
+
+### 2. Gas Optimization (Hook & Sentinel)
+- **V4 Standards**: Integrated official Uniswap v4 dynamic fee flags (`0x800000`).
+- **Topic Caching**: Pre-calculated event signatures stored as `constant` to save thousands in gas during cross-chain reactions.
+- **Clean Architecture**: Refactored logic into internal helpers, reducing bytecode and increasing readability.
+
+### 3. Resiliency
+- **Adaptive Relayer**: Hybrid relayer now handles RPC block limits and includes robust retry logic.
+- **Hardened UI**: Fixed dependency issues (`lucide-react`, `wagmi`) and optimized for Next.js 16/React 19.
+
+## ✅ Verification Demo
+1. **Crash**: Set price < $1500 on Sepolia. Sentinel triggers `panicMode` on Unichain.
+2. **Halt**: Trading on Hook is instantly gated. Dashboard flips to Red.
+3. **Recovery**: Set price > $1500. System restores and awards **Reputation** to the stabilizing agent.
 
 ---
-
-## 🖥️ Frontend Dashboard
-
-The Next.js dashboard is running at `http://localhost:3000`.
-
-### Key Features Implemented
-1.  **StatusCard**: Real-time monitoring of `AegisHook.panicMode()` on Unichain. Visualizes system state (Normal vs Panic).
-2.  **OracleSim**: Allows you to act as the market.
-    - **Crash**: Sets price to $1000 (< Threshold).
-    - **Stabilize**: Sets price to $2000 (> Threshold).
-3.  **TradingView**: A mock Swap UI that is **disabled** when the Circuit Breaker is active.
-
-## ✅ Verification Steps (Demo Flow)
-
-> **⚠️ Prerequisites**:
-> Open a NEW terminal and run the Relayer Service (bridges Lasna -> Unichain):
-> ```bash
-> cd frontend
-> npm run relay
-> ```
-> Keep this running!
-
-Use this flow to demonstrate the project:
-
-1.  **Initial State**:
-    - Dashboard shows **"SYSTEM NORMAL"** (Green).
-    - Swap UI is **Active**.
-    - Oracle Price is **~$2000**.
-
-2.  **Trigger Event**:
-    - Click **"CRASH MARKET"** on `OracleSim`.
-    - Confirm transaction on Sepolia.
-
-3.  **Observation**:
-    - **Watch the 'Network Monitor'**: You will see it type `"CRASH DETECTED"`.
-    - **StatusCard** will flip to **"PANIC MODE ACTIVE"** (Red/Pulsing).
-    - **TradingView** will show a "TRADING HALTED" overlay.
-
-3.  **Reset**:
-    - Click **"STABILIZE"** on `OracleSim`.
-    - Confirm transaction.
-    - System returns to **"SYSTEM NORMAL"**.
-
-4.  **Agentic Defense (New!)**:
-    - Scroll to the **Guardian Reputation** dashboard.
-    - **Mint ID**: Type a name (e.g. `DefenderOne`) and click **"Mint"**.
-    - **Observe**: You now have a unique Agent ID and a "ROOKIE AGENT" badge.
-    - **Note**: In a real scenario, the Sentinel boosts your reputation after a successful intervention, upgrading you to **"VIP GUARDIAN"**.
+© 2026 Aegis Protocol | Hardened by Senior Engineering

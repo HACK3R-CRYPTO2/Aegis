@@ -1,7 +1,8 @@
 import { http, createConfig } from 'wagmi'
-export { sepolia } from 'wagmi/chains'
-import { sepolia } from 'wagmi/chains'
+import { sepolia } from 'viem/chains'
 import { defineChain } from 'viem'
+
+export { sepolia }
 
 export const unichainSepolia = defineChain({
     id: 1301,

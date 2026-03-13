@@ -8,7 +8,7 @@ const sepolia = defineChain({
     id: 11155111,
     name: 'Sepolia',
     nativeCurrency: { name: 'Sepolia Ether', symbol: 'ETH', decimals: 18 },
-    rpcUrls: { default: { http: [process.env.NEXT_PUBLIC_SEPOLIA_RPC || 'https://eth-sepolia.g.alchemy.com/v2/uHo7ICSBqpDRguF-DhjWWF72l-sPapYX'] } },
+    rpcUrls: { default: { http: [process.env.NEXT_PUBLIC_SEPOLIA_RPC || 'https://ethereum-sepolia-rpc.publicnode.com'] } },
 })
 
 const unichainSepolia = defineChain({
@@ -42,108 +42,119 @@ console.log("🚀 Aegis Hybrid Relayer Service Started (Agentic Mode)")
 console.log(`👁️ Watching Oracle at ${DEPLOYED_ADDRESSES.MOCK_ORACLE} on Sepolia...`)
 console.log(`🛡️  Guarding Hook at ${DEPLOYED_ADDRESSES.AEGIS_HOOK} on Unichain...`)
 
-// State to avoid duplicate processing
-let lastProcessedBlock = 0n
+// --- Senior Production Configuration ---
+const POLLING_INTERVAL = 3000;
+const MAX_BLOCK_RANGE = 100; // Adaptive fallback
+const START_OFFSET = 50n;
+let lastProcessedBlock = 0n;
 
 async function checkAndRelay() {
     try {
-        const currentBlock = await sepoliaClient.getBlockNumber()
-        if (lastProcessedBlock === 0n) lastProcessedBlock = currentBlock - 100n // Start slightly back
+        const currentBlock = await sepoliaClient.getBlockNumber();
+        if (lastProcessedBlock === 0n) {
+            lastProcessedBlock = currentBlock - START_OFFSET;
+        }
 
-        if (currentBlock <= lastProcessedBlock) return
+        if (currentBlock <= lastProcessedBlock) return;
 
-        // 1. Get Price Updates
+        // Adaptive Block Range: Handle RPC limits elegantly
+        const toBlock = currentBlock > lastProcessedBlock + BigInt(MAX_BLOCK_RANGE) 
+            ? lastProcessedBlock + BigInt(MAX_BLOCK_RANGE) 
+            : currentBlock;
+
+        console.log(`🔍 Polling Sepolia range: [${lastProcessedBlock + 1n} - ${toBlock}]`);
+
+        // 1. Get Price Updates from MockOracle
         const logs = await sepoliaClient.getLogs({
             address: DEPLOYED_ADDRESSES.MOCK_ORACLE as `0x${string}`,
             event: parseAbiItem('event PriceUpdate(uint256 indexed newPrice, uint256 timestamp, address indexed updater)'),
             fromBlock: lastProcessedBlock + 1n,
-            toBlock: currentBlock
-        })
+            toBlock: toBlock
+        });
 
         if (logs.length > 0) {
-            console.log(`\n📨 Found ${logs.length} new Price Updates!`)
-            lastProcessedBlock = currentBlock
-        }
+            console.log(`\n📨 Found ${logs.length} new Price Updates!`);
+            
+            for (const log of logs) {
+                const { newPrice, updater } = (log as any).args;
+                const ethPrice = formatEther(newPrice);
+                const ethPriceFixed = Number(ethPrice).toFixed(0);
 
-        // Process recent logs
-        for (const log of logs) {
-            const price = log.args.newPrice!
-            const updater = log.args.updater!
-            const ethPrice = Number(formatEther(price)).toFixed(0)
+                console.log(`   -> Signal: $${ethPriceFixed} | Source: ${updater}`);
 
-            console.log(`   -> Price: $${ethPrice} | Updater: ${updater}`)
-
-            // Check Panic Mode
-            const currentPanic = await unichainPublic.readContract({
-                address: DEPLOYED_ADDRESSES.AEGIS_HOOK as `0x${string}`,
-                abi: AEGIS_HOOK_ABI,
-                functionName: 'panicMode'
-            })
-
-            // CRASH LOGIC
-            if (Number(ethPrice) < 1500 && !currentPanic) {
-                console.log("🚨 CRASH DETECTED! Enabling Panic Mode...")
-                const hash = await unichainWallet.writeContract({
+                // Check Panic Mode on Unichain
+                const isPanic = await unichainPublic.readContract({
                     address: DEPLOYED_ADDRESSES.AEGIS_HOOK as `0x${string}`,
                     abi: AEGIS_HOOK_ABI,
-                    functionName: 'setPanicMode',
-                    args: [true]
-                })
-                console.log(`✅ Panic Mode ENABLED! Tx: ${hash}`)
-            }
-            // STABILIZE LOGIC (The Agentic Part)
-            else if (Number(ethPrice) >= 1500 && currentPanic) {
-                console.log(`✅ Market Stabilized by ${updater}. Disabling Panic Mode...`)
+                    functionName: 'panicMode'
+                });
 
-                // 1. Disable Panic
-                const hash1 = await unichainWallet.writeContract({
-                    address: DEPLOYED_ADDRESSES.AEGIS_HOOK as `0x${string}`,
-                    abi: AEGIS_HOOK_ABI,
-                    functionName: 'setPanicMode',
-                    args: [false]
-                })
-                console.log(`🟢 Panic Mode DISABLED! Tx: ${hash1}`)
-
-                console.log("⏳ Waiting for confirmation...")
-                await unichainPublic.waitForTransactionReceipt({ hash: hash1 })
-
-                // 2. Award Reputation (If Agent Registered)
-                const agentId = await unichainPublic.readContract({
-                    address: DEPLOYED_ADDRESSES.GUARDIAN_REGISTRY as `0x${string}`,
-                    abi: AEGIS_GUARDIAN_REGISTRY_ABI,
-                    functionName: 'getAgentId',
-                    args: [updater]
-                })
-
-                if (agentId > 0n) {
-                    console.log(`🏆 Awarding Reputation to Agent #${agentId}...`)
-                    const hash2 = await unichainWallet.writeContract({
-                        address: DEPLOYED_ADDRESSES.GUARDIAN_REGISTRY as `0x${string}`,
-                        abi: AEGIS_GUARDIAN_REGISTRY_ABI,
-                        functionName: 'giveFeedback',
-                        args: [
-                            agentId,
-                            2000n * 10n ** 18n, // Value (Stabilized Volume Mock)
-                            18,
-                            "stabilized_volume",
-                            "heroic_save",
-                            "sepolia_oracle",
-                            "ipfs://proof",
-                            "0x0000000000000000000000000000000000000000000000000000000000000000"
-                        ]
-                    })
-                    console.log(`🌟 Reputation Awarded! Tx: ${hash2}`)
-                } else {
-                    console.log("⚠️ Updater is not a registered Guardian. No reputation awarded.")
+                // Senior Logic: Targeted Intervention
+                if (Number(ethPriceFixed) < 1500 && !isPanic) {
+                    console.warn("🚨 THRESHOLD BREACHED: Activating Aegis Circuit Breaker...");
+                    await _triggerPanic(true);
+                } 
+                else if (Number(ethPriceFixed) >= 1500 && isPanic) {
+                    console.info("✅ MARKET STABILIZED: Restoring Liquidity Flows...");
+                    await _triggerPanic(false);
+                    await _awardReputation(updater as `0x${string}`);
                 }
             }
         }
 
-    } catch (e) {
-        console.error("⚠️ polling error:", e)
+        lastProcessedBlock = toBlock;
+
+    } catch (e: any) {
+        process.stdout.write("⚠️");
+        // Senior Logging: Silent retries for network transient issues
+        if (e.message.includes("429") || e.message.includes("fetch")) {
+            // Transient network error, wait for next cycle
+        } else {
+            console.error("\n❌ Critical Relay Error:", e.message);
+        }
     }
 }
 
-// Poll every 3 seconds
-setInterval(checkAndRelay, 3000)
-checkAndRelay()
+// --- Internal Workflows ---
+
+async function _triggerPanic(status: boolean) {
+    try {
+        const hash = await unichainWallet.writeContract({
+            address: DEPLOYED_ADDRESSES.AEGIS_HOOK as `0x${string}`,
+            abi: AEGIS_HOOK_ABI,
+            functionName: 'setPanicMode',
+            args: [status]
+        });
+        console.log(`🛡️  Action Confirmed: ${status ? 'PANIC' : 'NORMAL'} | Tx: ${hash}`);
+    } catch (e: any) {
+        console.error("❌ Failed to update Hook status:", e.shortMessage || e.message);
+    }
+}
+
+async function _awardReputation(agent: `0x${string}`) {
+    try {
+        const agentId = await unichainPublic.readContract({
+            address: DEPLOYED_ADDRESSES.GUARDIAN_REGISTRY as `0x${string}`,
+            abi: AEGIS_GUARDIAN_REGISTRY_ABI,
+            functionName: 'getAgentId',
+            args: [agent]
+        });
+
+        if (agentId > 0n) {
+            console.info(`🏆 Reward: Boosting Reputation for Agent #${agentId}`);
+            const hash = await unichainWallet.writeContract({
+                address: DEPLOYED_ADDRESSES.GUARDIAN_REGISTRY as `0x${string}`,
+                abi: AEGIS_GUARDIAN_REGISTRY_ABI,
+                functionName: 'giveFeedback',
+                args: [agentId, 1000n * 10n**18n, 18, "stabilized_volume", "heroic_save", "", "", "0x0000000000000000000000000000000000000000000000000000000000000000"]
+            });
+            console.log(`🌟 Rewards Dispatched: ${hash}`);
+        }
+    } catch (e: any) {
+        console.error("⚠️ Reputation award failed:", e.message);
+    }
+}
+
+// Initialization Loop
+setInterval(checkAndRelay, POLLING_INTERVAL);
+checkAndRelay();

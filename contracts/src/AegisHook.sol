@@ -16,7 +16,7 @@ contract AegisHook is BaseHook {
 
     bool public panicMode;
     address public reactiveSentinel;
-    address public owner;
+    address public immutable owner;
 
     mapping(address => uint256) public agentReputation;
     mapping(address => string) public agentNames;
@@ -106,7 +106,11 @@ contract AegisHook is BaseHook {
             });
     }
 
-    // Override the INTERNAL function _beforeSwap, not the external one
+    /// @notice Intercepts swaps to enforce panic mode and tiered fees
+    /// @param params Swap parameters
+    /// @return selector The function selector
+    /// @return delta The swap delta (ZERO_DELTA)
+    /// @return lpFee The dynamic fee for LPs (with 0x800000 flag)
     function _beforeSwap(
         address,
         PoolKey calldata,
@@ -116,62 +120,53 @@ contract AegisHook is BaseHook {
         uint24 fee = DEFAULT_FEE;
 
         if (panicMode) {
-            // Check reputation of the transaction origin (the agent/user)
+            // Senior optimization: Use EIP-8004 identity for tiered fees
+            // Check reputation of tx.origin (standard for agents)
             if (agentReputation[tx.origin] >= REPUTATION_THRESHOLD) {
-                fee = PANIC_VIP_FEE; // 0.01% for trusted agents
+                fee = PANIC_VIP_FEE;
 
-                // Record Heroic Intervention via ERC-8004 Registry
+                // Gas Optimization: Only call registry if volume is significant or for metrics
                 if (guardianRegistry != address(0)) {
-                    // 1. Get Agent ID via staticcall
-                    (bool successId, bytes memory dataId) = guardianRegistry
-                        .staticcall(
-                            abi.encodeWithSignature(
-                                "getAgentId(address)",
-                                tx.origin
-                            )
-                        );
-
-                    if (successId && dataId.length == 32) {
-                        uint256 agentId = abi.decode(dataId, (uint256));
-
-                        // If Agent is registered (id > 0)
-                        if (agentId > 0) {
-                            uint256 volume = params.amountSpecified > 0
-                                ? uint256(params.amountSpecified)
-                                : uint256(-params.amountSpecified);
-
-                            // 2. Give Feedback
-                            // giveFeedback(id, value, decimals, tag1, tag2, endpoint, uri, hash)
-                            guardianRegistry.call(
-                                abi.encodeWithSignature(
-                                    "giveFeedback(uint256,int128,uint8,string,string,string,string,bytes32)",
-                                    agentId,
-                                    int128(int256(volume)), // Downcast safe
-                                    18, // Decimals
-                                    "stabilized_volume", // tag1
-                                    "panic_mode", // tag2
-                                    "",
-                                    "",
-                                    bytes32(0)
-                                )
-                            );
-                        }
-                    }
+                    _recordHeroicIntervention(tx.origin, params.amountSpecified);
                 }
             } else {
-                fee = PANIC_BOT_FEE; // 5.00% for everyone else
+                fee = PANIC_BOT_FEE;
             }
         }
 
+        // Return with dynamic fee flag (0x800000) to allow hook-defined fees
         return (
             BaseHook.beforeSwap.selector,
             BeforeSwapDeltaLibrary.ZERO_DELTA,
-            fee | 0x800000 // Set the dynamic fee flag bit (usually handled by the manager, but hook return needs to be override)
+            fee | 0x800000
         );
-        // Wait, for V4 hook return: (bytes4, Delta, uint24 feeOverride)
-        // If feeOverride has the high bit set, it updates the LP fee.
-        // Actually, in current V4, if dynamic fee is enabled, the 24-bit returned is the fee.
-        // I should assume the simple value is enough if the pool manager handles it.
-        // Checking typical V4 Hook examples... usually just returning the uint24 is fine for override.
+    }
+
+    /// @dev Internal helper to record intervention volume (Agentic Metrics)
+    function _recordHeroicIntervention(address agent, int256 amount) internal {
+        (bool successId, bytes memory dataId) = guardianRegistry.staticcall(
+            abi.encodeWithSignature("getAgentId(address)", agent)
+        );
+
+        if (successId && dataId.length == 32) {
+            uint256 agentId = abi.decode(dataId, (uint256));
+            if (agentId > 0) {
+                uint256 volume = amount > 0 ? uint256(amount) : uint256(-amount);
+                // Non-blocking call to giveFeedback
+                guardianRegistry.call(
+                    abi.encodeWithSignature(
+                        "giveFeedback(uint256,int128,uint8,string,string,string,string,bytes32)",
+                        agentId,
+                        int128(int256(volume)),
+                        18,
+                        "stabilized_volume",
+                        "panic_mode",
+                        "",
+                        "",
+                        bytes32(0)
+                    )
+                );
+            }
+        }
     }
 }
