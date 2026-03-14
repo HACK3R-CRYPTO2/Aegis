@@ -91,7 +91,7 @@ contract AegisGuardianRegistry is Ownable, ERC721URIStorage {
     // --- Reputation Functions ---
 
     /// @notice Records external feedback for an agent (EIP-8004 Standard)
-    /// @dev Senior optimization: Tracks cumulative volumes in O(1)
+    /// @dev Optimized state tracking: Tracks cumulative volumes in O(1)
     function giveFeedback(
         uint256 agentId,
         int128 value,

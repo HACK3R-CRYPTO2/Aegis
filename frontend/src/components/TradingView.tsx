@@ -125,7 +125,7 @@ export function TradingView() {
                     </div>
                 </div>
 
-                {/* Security Breakdown Layout (Senior UX) */}
+                {/* Security Breakdown Layout */}
                 <section className="mt-4 bg-white/2 border border-white/5 rounded-2xl p-3">
                     <div className="flex items-center gap-2 mb-2 text-[9px] font-cyber text-gray-500 tracking-widest px-1">
                         <Info className="w-3 h-3" />

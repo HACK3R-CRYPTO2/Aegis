@@ -20,11 +20,11 @@ The HUD is engineered for **Zero-Latency Intelligence**. It provides a real-time
 *   **Shield Status Cockpit**: Immediate visual confirmation of the **Equilibrium Shield** state (STANDBY, ARMED, or ACTIVE).
 *   **Unified PriceContext**: A centralized React state engine that synchronizes the Header, Meter, and Trading Terminal, ensuring the entire HUD is a single, cohesive source of truth.
 
-### 2. High-Fidelity Reactive Stack
+### 2. High-Fidelity Tactical Stack
 *   **Engine**: Next.js 14+ (App Router) for sub-pixel rendering.
 *   **Web3 Connectivity**: `wagmi` + `viem` optimized for high-frequency multicall polling from Unichain and Sepolia.
 *   **Tactical Motion**: `framer-motion` for hardware-accelerated transitions during security state shifts.
-*   **Aesthetics**: Senior-grade Glassmorphism. The interface is designed to feel like a premium, high-stakes military HUD.
+*   **Aesthetics**: Glassmorphism. The interface is designed to feel like a premium, high-stakes military HUD.
 
 ---
 
@@ -53,4 +53,4 @@ The HUD is engineered for **Zero-Latency Intelligence**. It provides a real-time
 3.  **Activate Sentinel Relayer**: `npm run relay` (Requires `PRIVATE_KEY` for autonomous sync).
 
 ---
-© 2026 Aegis Prime Protocol | Hardened by Senior Engineering
+© 2026 Aegis Prime Protocol | Hardened for Performance

@@ -42,7 +42,7 @@ console.log("🚀 Aegis Hybrid Relayer Service Started (Agentic Mode)")
 console.log(`👁️ Watching Oracle at ${DEPLOYED_ADDRESSES.MOCK_ORACLE} on Sepolia...`)
 console.log(`🛡️  Guarding Hook at ${DEPLOYED_ADDRESSES.AEGIS_HOOK} on Unichain...`)
 
-// --- Senior Production Configuration ---
+// --- Industrial-Grade Configuration ---
 const POLLING_INTERVAL = 3000;
 const MAX_BLOCK_RANGE = 100; // Adaptive fallback
 const START_OFFSET = 50n;

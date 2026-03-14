@@ -27,7 +27,7 @@ contract AegisSentinel is AbstractReactive {
     event PanicTriggered(uint256 indexed price);
     event AgentReputationBoosted(address indexed agent, uint256 score);
 
-    /// @notice Senior-grade constructor targeting cross-chain endpoints
+    /// @notice Optimized constructor targeting cross-chain endpoints
     /// @param _aegisHook The Uniswap v4 Hook address on Unichain
     constructor(
         address _service,
@@ -78,7 +78,7 @@ contract AegisSentinel is AbstractReactive {
     }
 
     /// @notice Core reaction logic (Reactive Virtual Machine Entrypoint)
-    /// @dev Senior implementation: Decoupled logic from emission logic
+    /// @dev Decoupled logic from emission logic
     function react(LogRecord calldata log) external override vmOnly {
         // Branch 1: Market Crash Detection (Sepolia -> Unichain)
         if (log.chain_id == SEPOLIA_CHAIN_ID && log.topic_0 == TOPIC_PRICE_UPDATE) {

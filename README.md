@@ -60,7 +60,7 @@ graph TD
 
 ## 🏗️ Technical Command (Deep Dives)
 
-We don't settle for "standard" code. Every line is hardened for the cross-chain battlefield:
+Aegis Prime is built on a foundation of hardened, industrial-grade engineering. Every unit of logic is optimized for the cross-chain battlefield:
 
 *   **[🎯 Tactical Contracts (The Shield)](./contracts/README.md)**: Explore the **Uniswap v4 Hook** implementation, high-fidelity security overrides, and the autonomous cross-chain callback engine.
 *   **[📡 The Command Center (Frontend)](./frontend/README.md)**: Deep dive into the **Unified PriceContext**, real-time radar HUD, and the high-performance Web3 stack.
@@ -100,4 +100,4 @@ We don't settle for "standard" code. Every line is hardened for the cross-chain 
 - **Target Network**: **Unichain / Reactive Ecosystem**
 
 ---
-© 2026 Aegis Prime Protocol | Hardened by Senior Engineering
+© 2026 Aegis Prime Protocol | Hardened for Performance

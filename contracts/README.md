@@ -27,14 +27,12 @@ The Sentinel is the **Cross-Chain Nervous System** of the protocol, residing on 
 
 ---
 
-## 🛠️ Senior Engineering Decisions
+## 🛠️ Protocol Engineering Decisions
 
-*   **Decision**: Dynamic Fee Overrides (99.9%) instead of Reverts.
-    *   **Rationale**: Protecting LVR (Loss Versus Rebalancing) requires capturing the margin, not just blocking it. By using a tax, we force toxic flow to sponsor the LP's safety.
-*   **Decision**: Local Divergence Logic.
-    *   **Rationale**: The hook calculates the BP (Basis Point) gap internally between the L1 pulse and the L2 reality, ensuring the protection is always proportional to the real-world threat level.
-*   **Decision**: High-Performance Transient Storage.
-    *   **Rationale**: We minimize state-bloat by utilizing Uniswap v4's execution hooks effectively, ensuring the "Shield" is light but indestructible.
+*   **Decision**: Use **Custom Errors** instead of string reverts.
+    *   **Rationale**: Reduces contract byte-code size and gas consumption, while providing clearer debugging paths for frontend integrators.
+*   **Decision**: Implement **Internal Gap Calculation**.
+    *   **Rationale**: The hook calculates the divergence locally between the L1 state and L2 pool price to ensure the tax is always proportional to the real-world arbitrage opportunity.
 
 ---
 
@@ -51,4 +49,4 @@ The Sentinel is the **Cross-Chain Nervous System** of the protocol, residing on 
 *   **AegisSentinel (Oracle Target)**: `0x0f764437ffbe1fcd0d0d276a164610422710b482`
 
 ---
-© 2026 Aegis Prime Protocol | Engineered for the Combat Horizon
+© 2026 Aegis Prime Protocol | Hardened for Secure Autonomy
