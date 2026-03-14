@@ -7,10 +7,12 @@ import { sepolia } from '../lib/config'
 import { TrendingDown, TrendingUp, Activity } from 'lucide-react'
 import { formatEther } from 'viem'
 import { useEffect, useState } from 'react'
+import { usePricePulse } from '../lib/usePricePulse'
 import confetti from 'canvas-confetti'
 
 export function OracleSim() {
     const { address, isConnected } = useAccount()
+    const { l1Price, setL1Price } = usePricePulse() // Added hydration from hook
     const { data: price, refetch } = useReadContract({
         address: DEPLOYED_ADDRESSES.MOCK_ORACLE as `0x${string}`,
         abi: MOCK_ORACLE_ABI,
@@ -30,7 +32,7 @@ export function OracleSim() {
 
     useEffect(() => {
         if (isSuccess) {
-            refetch()
+            // refetch() // No longer needed as we use optimistic updates and usePricePulse handles actual price sync
             if (lastAction === 'stabilize') {
                 confetti({
                     particleCount: 100,
@@ -40,43 +42,53 @@ export function OracleSim() {
                 })
             }
         }
-    }, [isSuccess, refetch, lastAction])
+    }, [isSuccess, lastAction])
+
+    useEffect(() => {
+        if (price !== undefined) {
+            setL1Price(Number(formatEther(price as bigint)))
+        }
+    }, [price, setL1Price])
 
     const handleCrash = () => {
         setLastAction('crash')
+        setL1Price(1000) // Optimistic update
         writeContract({
             address: DEPLOYED_ADDRESSES.MOCK_ORACLE as `0x${string}`,
             abi: MOCK_ORACLE_ABI,
             functionName: 'setPrice',
-            args: [1000n * 10n ** 18n], // 1000 ETH price (Crash)
+            args: [1000n * 10n ** 18n],
             chainId: sepolia.id
         })
     }
 
     const handleDrift = () => {
         setLastAction('crash')
+        setL1Price(1900) // Optimistic update
         writeContract({
             address: DEPLOYED_ADDRESSES.MOCK_ORACLE as `0x${string}`,
             abi: MOCK_ORACLE_ABI,
             functionName: 'setPrice',
-            args: [1900n * 10n ** 18n], // 1900 ETH price (500 BP)
+            args: [1900n * 10n ** 18n], // 1900 ETH price (526 BP)
             chainId: sepolia.id
         })
     }
 
     const handleSteep = () => {
         setLastAction('crash')
+        setL1Price(1600) // Optimistic update ($1600 = 2500 BP)
         writeContract({
             address: DEPLOYED_ADDRESSES.MOCK_ORACLE as `0x${string}`,
             abi: MOCK_ORACLE_ABI,
             functionName: 'setPrice',
-            args: [1800n * 10n ** 18n], // 1800 ETH price (1000 BP)
+            args: [1600n * 10n ** 18n], // 1600 ETH price (2500 BP)
             chainId: sepolia.id
         })
     }
 
     const handleStabilize = () => {
         setLastAction('stabilize')
+        setL1Price(2000) // Optimistic update
         writeContract({
             address: DEPLOYED_ADDRESSES.MOCK_ORACLE as `0x${string}`,
             abi: MOCK_ORACLE_ABI,
@@ -88,7 +100,7 @@ export function OracleSim() {
 
     if (!mounted) return <div className="glass-card p-5 rounded-2xl animate-pulse bg-white/5 h-full" />
 
-    const currentPrice = price ? Number(formatEther(price as bigint)).toFixed(0) : "..."
+    const currentPrice = l1Price.toFixed(0) // Use optimistic price for UI
 
     return (
         <div className="glass-card p-5 rounded-2xl border border-white/5 backdrop-blur-sm h-full flex flex-col justify-between">
@@ -137,7 +149,7 @@ export function OracleSim() {
                     className="btn-cyber flex flex-col items-center justify-center py-2 rounded-lg bg-red-400/10 border border-red-400/30 hover:bg-red-400/20 hover:border-red-400 disabled:opacity-50"
                 >
                     <span className="text-[8px] font-bold text-red-400 uppercase mb-0.5">Steep</span>
-                    <span className="text-[7px] font-mono opacity-60 text-red-400">1100 BP</span>
+                    <span className="text-[7px] font-mono opacity-60 text-red-400">2500 BP</span>
                 </button>
 
                 <button
