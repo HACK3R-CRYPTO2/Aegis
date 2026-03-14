@@ -38,9 +38,14 @@ export function NetworkMonitor() {
     })
 
     const [logs, setLogs] = useState<Log[]>([])
+    const [mounted, setMounted] = useState(false)
     const logsEndRef = useRef<HTMLDivElement>(null)
     const prevArmedRef = useRef<boolean>(false)
     const prevPriceRef = useRef<number>(2000)
+
+    useEffect(() => {
+        setMounted(true)
+    }, [])
 
     // Helper to add logs
     const addLog = (message: string, type: LogType, chain: 'SEPOLIA' | 'REACTIVE' | 'UNICHAIN') => {
@@ -53,42 +58,60 @@ export function NetworkMonitor() {
         logsEndRef.current?.scrollIntoView({ behavior: 'smooth' })
     }, [logs])
 
+    // Initial Boot-up Logs
+    useEffect(() => {
+        addLog("System Monitoring Initiated", "info", "UNICHAIN")
+        addLog("Aegis Prime: Tracking Unichain Sepolia...", "info", "UNICHAIN")
+        setTimeout(() => {
+            addLog("Reactive Sentinel: Monitoring Ethereum Sepolia...", "info", "REACTIVE")
+        }, 500)
+    }, [])
+
     // Logic Observer
     useEffect(() => {
-        if (!price) return
+        if (!mounted || !price) return
 
         const currentPrice = Number(formatEther(price as bigint))
         const isArmed = sentinelArmed === true
 
-        // Detect Crash Start
-        if (currentPrice < 1500 && prevPriceRef.current >= 1500) {
-            addLog(`EQUILIBRIUM BREACH: Market Divergence at $${currentPrice.toFixed(0)}`, 'danger', 'SEPOLIA')
+        // Multi-Tier Detection Logic
+        const isStable = currentPrice >= 1950;
+        const isDrift = currentPrice < 1950 && currentPrice >= 1850;
+        const isSteep = currentPrice < 1850 && currentPrice >= 1500;
+        const isCrash = currentPrice < 1500;
+
+        const prevIsStable = prevPriceRef.current >= 1950;
+
+        // Trigger Logs on Transitions
+        if (isDrift && prevIsStable) {
+            addLog(`MARKET DRIFT: 500 BP Divergence Detected`, 'warning', 'SEPOLIA')
+            addLog(`Shield Status: Standby [Monitoring Gap]`, 'info', 'UNICHAIN')
+        }
+
+        if (isSteep && (prevIsStable || (prevPriceRef.current >= 1850))) {
+            if (prevPriceRef.current >= 1850) {
+                addLog(`MARKET STRESS: 1100 BP Divergence Detected`, 'warning', 'SEPOLIA')
+                addLog(`Sentinel Alert: Divergence exceeding safety threshold`, 'warning', 'REACTIVE')
+            }
+        }
+
+        if (isCrash && prevPriceRef.current >= 1500) {
+            addLog(`EQUILIBRIUM BREACH: Extreme Market Crash ($${currentPrice.toFixed(0)})`, 'danger', 'SEPOLIA')
             setTimeout(() => {
                 addLog(`Reactive Sentinel: L1 Gap Captured. Verifying...`, 'warning', 'REACTIVE')
-            }, 1000)
-            setTimeout(() => {
-                addLog(`Prime Logic: Confirmation 1/2 Received.`, 'info', 'REACTIVE')
-            }, 2000)
-        }
-
-        // Detect Panic Activation
-        if (isArmed && !prevArmedRef.current) {
-            addLog(`Callback Received: Market Sync Verified`, 'success', 'UNICHAIN')
-            addLog(`🛡️ AEGIS PRIME: Shielding LPs via Divergence Offset`, 'success', 'UNICHAIN')
-        }
-
-        // Detect Recovery
-        if (currentPrice >= 1500 && prevPriceRef.current < 1500) {
-            addLog(`Market Equilibrium Restored: $${currentPrice.toFixed(0)}`, 'success', 'SEPOLIA')
-            setTimeout(() => {
-                addLog(`Reactive Sentinel: Global Equilibrium Emitted`, 'info', 'REACTIVE')
             }, 500)
         }
 
-        // Detect Panic Deactivation
-        if (!isArmed && prevArmedRef.current) {
-            addLog(`Callback Received: Normal Equilibrium restored`, 'success', 'UNICHAIN')
-            addLog(`✅ SHIELD STANDBY: Monitoring Market Pulses`, 'success', 'UNICHAIN')
+        // Detect Arming
+        if (isArmed && !prevArmedRef.current) {
+            addLog(`🛡️ AEGIS PRIME: Shield ARMED. Value Capture Active`, 'success', 'UNICHAIN')
+            addLog(`>> Redirecting arbitrage margin to LP Pool`, 'success', 'UNICHAIN')
+        }
+
+        // Recovery
+        if (isStable && !prevIsStable) {
+            addLog(`EQUILIBRIUM RESTORED: Market Healthy at $${currentPrice.toFixed(0)}`, 'success', 'SEPOLIA')
+            addLog(`✅ SHIELD STANDBY: System Monitoring Active`, 'success', 'UNICHAIN')
         }
 
         prevPriceRef.current = currentPrice

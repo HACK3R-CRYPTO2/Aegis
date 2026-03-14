@@ -20,7 +20,7 @@ export function TradingView() {
     if (!mounted) return <div className="glass-card p-5 rounded-3xl h-[400px] animate-pulse bg-white/5 w-full" />
 
     // Equilibrium Math
-    const rawSecurityFee = isArmed ? (divergence / 100 + 0.5) : 0.3;
+    const rawSecurityFee = isArmed ? (divergence / 100 + 0.05) : 0.3;
     const securityFee = Math.min(rawSecurityFee, 99.9); // Cap at 99.9% for UI consistency
     const priceDivergencePercent = ((l2Price - l1Price) / l1Price) * 100;
 

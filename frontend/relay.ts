@@ -76,7 +76,7 @@ async function checkAndRelay() {
 
         const ethPrice = formatEther(latestPrice);
         const ethPriceNum = Number(ethPrice);
-        const targetArmed = ethPriceNum < 1500;
+        const targetArmed = ethPriceNum < 1950;
 
         console.log(`[DEBUG] Price: $${ethPriceNum} | Target: ${targetArmed ? "ARM" : "SECURE"} | On-Chain: ${onChainArmed ? "ARMED" : "STABLE"}`);
 

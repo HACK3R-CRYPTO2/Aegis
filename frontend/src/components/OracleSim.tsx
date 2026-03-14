@@ -99,12 +99,12 @@ export function OracleSim() {
 
             <div className="text-center mb-4 flex-1 flex flex-col justify-center">
                 <div className="text-gray-500 font-mono text-[10px] uppercase tracking-widest mb-1">ETH / USD</div>
-                <div className={`text-5xl font-black font-cyber tracking-tighter ${Number(currentPrice) < 1500 ? 'text-red-500 animate-glitch' : 'text-white'}`}>
+                <div className={`text-5xl font-black font-cyber tracking-tighter ${Number(currentPrice) < 1950 ? 'text-red-500 animate-glitch' : 'text-white'}`}>
                     ${currentPrice}
                 </div>
                 <div className="flex flex-col gap-1 mt-3 items-center">
                     <div className="text-[9px] font-mono text-gray-600 border-t border-white/5 pt-1 w-24">
-                        Threshold: $1,500
+                        Threshold: $1,950
                     </div>
                     <div className="text-[8px] font-mono text-indigo-400 bg-indigo-500/5 px-2 py-0.5 rounded border border-indigo-500/10 uppercase tracking-widest">
                         Aegis Prime: Direct Detection
