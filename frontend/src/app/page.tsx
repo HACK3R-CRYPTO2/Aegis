@@ -104,14 +104,14 @@ export default function Home() {
                <div className="w-full h-12 bg-white/5 rounded-full relative overflow-hidden border border-white/10 p-1">
                   <motion.div 
                     initial={{ width: 0 }}
-                    animate={{ width: `${Math.min((divergence / 10000) * 100, 100)}%` }}
+                    animate={{ width: `${Math.min((divergence / 2500) * 100, 100)}%` }}
                     className={`h-full rounded-full transition-colors duration-500 ${divergence > 500 ? 'bg-red-500 shadow-[0_0_20px_rgba(239,68,68,0.5)]' : 'bg-neon-cyan shadow-[0_0_20px_rgba(0,212,255,0.5)]'}`}
                   />
                   <div className="absolute inset-0 flex items-center justify-between px-4 text-[10px] font-mono text-white/40 pointer-events-none">
                     <span>0 BP</span>
+                    <span>500 BP (DRIFT)</span>
                     <span>1000 BP (STEEP)</span>
-                    <span>5000 BP</span>
-                    <span>10000 BP (CRASH)</span>
+                    <span>2500 BP + (CRASH)</span>
                   </div>
                </div>
 
@@ -122,7 +122,7 @@ export default function Home() {
                   </div>
                   <div className="text-center">
                     <div className={`text-2xl font-black font-cyber ${isArmed ? 'text-red-500 animate-pulse' : 'text-neon-purple'}`}>
-                      {isArmed ? `${Math.min(divergence / 100 + 0.5, 99.9).toFixed(1)}%` : '0.3%'}
+                      {isArmed ? `${Math.min(divergence / 100 + 0.05, 99.9).toFixed(2)}%` : '0.3%'}
                     </div>
                     <div className="text-[8px] text-gray-500 uppercase font-mono">Dynamic Fee</div>
                   </div>
