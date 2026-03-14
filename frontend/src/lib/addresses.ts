@@ -10,3 +10,11 @@ export const CHAINS = {
     UNICHAIN: 1301,
     LASNA: 5318007
 };
+
+export const POOL_CONFIG = {
+    currency0: "0x0165878A594ca255338adfa4d48449f69242Eb8F" as `0x${string}`,
+    currency1: "0xa513E6E4b8f2a923D98304ec87F64353C4D5C853" as `0x${string}`,
+    fee: 3000,
+    tickSpacing: 60,
+    hooks: DEPLOYED_ADDRESSES.AEGIS_HOOK as `0x${string}`
+};
