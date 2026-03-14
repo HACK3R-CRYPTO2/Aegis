@@ -31,7 +31,7 @@ export function ReputationDashboard() {
         query: { enabled: !!address }
     })
 
-    const hasIdentity = agentId && Number(agentId) > 0
+    const hasIdentity = !!(agentId && Number(agentId) > 0)
 
     // 2. Get Agent Stats (if registered)
     const { data: totalVolume, refetch: refetchVol } = useReadContract({
@@ -81,7 +81,9 @@ export function ReputationDashboard() {
     }, [isConfirmed, refetchId, refetchVol, refetchCount, refetchURI])
 
     // Parse Volume (int128 -> string)
-    const displayVolume = totalVolume ? formatEther(BigInt(totalVolume)) : "0"
+    const displayVolume = (typeof totalVolume === 'bigint' || typeof totalVolume === 'string' || typeof totalVolume === 'number') 
+        ? formatEther(BigInt(totalVolume)) 
+        : "0"
     const isVIP = Number(displayVolume) > 1000 // Mock VIP Threshold
 
     const handleRegister = async () => {
@@ -141,7 +143,7 @@ export function ReputationDashboard() {
                 </h2>
                 {hasIdentity && (
                     <div className="px-2 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-indigo-500/10 text-indigo-400 border border-indigo-500/30 font-mono">
-                        ID: #{agentId?.toString()}
+                        ID: #{agentId ? String(agentId) : ''}
                     </div>
                 )}
             </div>
