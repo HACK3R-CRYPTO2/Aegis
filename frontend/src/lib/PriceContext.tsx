@@ -12,7 +12,7 @@ interface PriceContextType {
     isArmed: boolean
     divergence: number
     poolId: string
-    setL1Price: (price: number) => void
+    refetchAll: () => void
 }
 
 const PriceContext = createContext<PriceContextType | undefined>(undefined)
@@ -39,7 +39,7 @@ export function PriceProvider({ children }: { children: React.ReactNode }) {
     )
 
     // Contract Reads
-    const { data: oraclePrice } = useReadContract({
+    const { data: oraclePrice, refetch: refetchL1 } = useReadContract({
         address: DEPLOYED_ADDRESSES.MOCK_ORACLE as `0x${string}`,
         abi: MOCK_ORACLE_ABI,
         functionName: 'price',
@@ -47,7 +47,7 @@ export function PriceProvider({ children }: { children: React.ReactNode }) {
         query: { refetchInterval: 3000 }
     })
 
-    const { data: poolDataHooked } = useReadContract({
+    const { data: poolDataHooked, refetch: refetchL2Hooked } = useReadContract({
         address: DEPLOYED_ADDRESSES.POOL_MANAGER as `0x${string}`,
         abi: POOL_MANAGER_ABI,
         functionName: 'getSlot0',
@@ -56,7 +56,7 @@ export function PriceProvider({ children }: { children: React.ReactNode }) {
         query: { refetchInterval: 2000 }
     })
 
-    const { data: poolDataUnhooked } = useReadContract({
+    const { data: poolDataUnhooked, refetch: refetchL2Unhooked } = useReadContract({
         address: DEPLOYED_ADDRESSES.POOL_MANAGER as `0x${string}`,
         abi: POOL_MANAGER_ABI,
         functionName: 'getSlot0',
@@ -65,7 +65,7 @@ export function PriceProvider({ children }: { children: React.ReactNode }) {
         query: { refetchInterval: 2000 }
     })
 
-    const { data: armedState } = useReadContract({
+    const { data: armedState, refetch: refetchShield } = useReadContract({
         address: DEPLOYED_ADDRESSES.AEGIS_HOOK as `0x${string}`,
         abi: AEGIS_HOOK_ABI,
         functionName: 'sentinelArmed',
@@ -73,15 +73,17 @@ export function PriceProvider({ children }: { children: React.ReactNode }) {
         query: { refetchInterval: 3000 }
     })
 
-    // Global Sync Logic
+    const refetchAll = () => {
+        refetchL1()
+        refetchL2Hooked()
+        refetchL2Unhooked()
+        refetchShield()
+    }
+
+    // Strict On-Chain Sync Logic
     useEffect(() => {
-        // Only update if contract catches up or if we haven't set a local optimistic value
         if (oraclePrice) {
-            const contractPrice = Number(formatEther(oraclePrice))
-            setL1Price(prev => {
-                const diff = Math.abs(prev - contractPrice)
-                return diff < 1 ? contractPrice : prev
-            })
+            setL1Price(Number(formatEther(oraclePrice)))
         }
 
         const poolData = poolDataHooked || poolDataUnhooked
@@ -108,7 +110,7 @@ export function PriceProvider({ children }: { children: React.ReactNode }) {
     }, [oraclePrice, poolDataHooked, poolDataUnhooked, armedState, l1Price, l2Price])
 
     return (
-        <PriceContext.Provider value={{ l1Price, l2Price, isArmed, divergence, poolId: poolIdHooked, setL1Price }}>
+        <PriceContext.Provider value={{ l1Price, l2Price, isArmed, divergence, poolId: poolIdHooked, refetchAll }}>
             {children}
         </PriceContext.Provider>
     )

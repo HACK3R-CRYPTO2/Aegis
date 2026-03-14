@@ -12,19 +12,12 @@ import confetti from 'canvas-confetti'
 
 export function OracleSim() {
     const { address, isConnected } = useAccount()
-    const { l1Price, setL1Price } = usePriceContext() // Added hydration from hook
-    const { data: price, refetch } = useReadContract({
-        address: DEPLOYED_ADDRESSES.MOCK_ORACLE as `0x${string}`,
-        abi: MOCK_ORACLE_ABI,
-        functionName: 'price',
-        chainId: sepolia.id,
-        query: { refetchInterval: 2000 }
-    })
-
     const { writeContract, data: hash, isPending } = useWriteContract()
     const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({ hash })
     const [lastAction, setLastAction] = useState<'crash' | 'stabilize' | null>(null)
     const [mounted, setMounted] = useState(false)
+
+    const { l1Price, refetchAll } = usePriceContext()
 
     useEffect(() => {
         setMounted(true)
@@ -32,7 +25,7 @@ export function OracleSim() {
 
     useEffect(() => {
         if (isSuccess) {
-            // refetch() // No longer needed as we use optimistic updates and usePricePulse handles actual price sync
+            refetchAll() // On confirmation, tell the global context to refresh from chain
             if (lastAction === 'stabilize') {
                 confetti({
                     particleCount: 100,
@@ -42,17 +35,10 @@ export function OracleSim() {
                 })
             }
         }
-    }, [isSuccess, lastAction])
-
-    useEffect(() => {
-        if (price !== undefined) {
-            setL1Price(Number(formatEther(price as bigint)))
-        }
-    }, [price, setL1Price])
+    }, [isSuccess, refetchAll, lastAction])
 
     const handleCrash = () => {
         setLastAction('crash')
-        setL1Price(1000) // Optimistic update
         writeContract({
             address: DEPLOYED_ADDRESSES.MOCK_ORACLE as `0x${string}`,
             abi: MOCK_ORACLE_ABI,
@@ -64,7 +50,6 @@ export function OracleSim() {
 
     const handleDrift = () => {
         setLastAction('crash')
-        setL1Price(1900) // Optimistic update
         writeContract({
             address: DEPLOYED_ADDRESSES.MOCK_ORACLE as `0x${string}`,
             abi: MOCK_ORACLE_ABI,
@@ -76,7 +61,6 @@ export function OracleSim() {
 
     const handleSteep = () => {
         setLastAction('crash')
-        setL1Price(1600) // Optimistic update ($1600 = 2500 BP)
         writeContract({
             address: DEPLOYED_ADDRESSES.MOCK_ORACLE as `0x${string}`,
             abi: MOCK_ORACLE_ABI,
@@ -88,7 +72,6 @@ export function OracleSim() {
 
     const handleStabilize = () => {
         setLastAction('stabilize')
-        setL1Price(2000) // Optimistic update
         writeContract({
             address: DEPLOYED_ADDRESSES.MOCK_ORACLE as `0x${string}`,
             abi: MOCK_ORACLE_ABI,
@@ -100,7 +83,7 @@ export function OracleSim() {
 
     if (!mounted) return <div className="glass-card p-5 rounded-2xl animate-pulse bg-white/5 h-full" />
 
-    const currentPrice = l1Price.toFixed(0) // Use optimistic price for UI
+    const currentPrice = l1Price.toFixed(0)
 
     return (
         <div className="glass-card p-5 rounded-2xl border border-white/5 backdrop-blur-sm h-full flex flex-col justify-between">
