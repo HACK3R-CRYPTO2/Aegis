@@ -1,4 +1,4 @@
-# 🛡️ Aegis Prime: The Autonomous Liquidity Shield
+# 🛡️ Aegis Prime: The Tactical Liquidity Fortress
 
 ```text
       _      _____  ____ ___ ____    ____  ____  ___ __  __ _____ 
@@ -6,80 +6,72 @@
     / _ \   |  _| | |  _ | |\___ \  | |_) | |_) || || |\/| |  _|  
    / ___ \  | |___| |_| || | ___) | |  __/|  _ < | || |  | | |___ 
   /_/   \_\ |_____|\____|___|____/  |_|   |_| \_\___|_|  |_|_____|
-                                                                   
+                                                                    
 ```
 
-**Imagine a marketplace that doesn't just sit and wait for exploitation, but defends itself.** 
+**Stop being the target. Start being the predator.**
 
-Traditional liquidity provision is a passive game—you provide assets and hope arbitrage bots don't eat your lunch. But in the shadows of cross-chain volatility, a new kind of defense is rising. Welcome to **Aegis Prime**, where liquidity isn't static; it's a fortress.
+Traditional Liquidity Provision is a passive, defenseless game. You park your capital and hope the arbitrage bots don't bleed you dry during volatility. In the cross-chain arena, they are the hunters, and you are the prey.
 
----
-
-## 📖 The Story: "The Toxic Flow Ambush"
-
-### The Traditional Struggle
-Meet **Alice**, a Liquidity Provider (LP). In a traditional pool, Alice is the **Target**. When a price crash happens on Ethereum Mainnet, she is the last to know. Arbitrage bots see the crash instantly and race to Unichain to drain her pool before the oracles can even update. She takes the Loss Versus Rebalancing (LVR), she carries the risk, and she pays for the bot's profit.
-
-### The Aegis Defense
-Alice enters **Aegis Prime**. Here, the roles are reversed. Alice is no longer the target; she is the **Maker of the Trap**. She parks her assets in the **Aegis Hook**. She doesn't fight the bots; she forces them to pay for their speed.
-
-### The Digital Ambush
-Across the cross-chain horizon, the **Sentinel** is watching. This isn't just any bot; it's a **Decentralized Watchman** on the **Reactive Network**. It listens to the sub-second pulse of Ethereum Sepolia (L1).
-
-Suddenly, a crash hits. 
-
-The Reactive Network fires a cross-chain signal. The **Equilibrium Shield** strikes. Because this is a **Proportional Defense**, the Aegis Hook applies a **99.9% Dynamic Security Tax** instantly. The arbitrage bots arrive, expecting a feast. Instead, they hit the Tax. Their profit is captured and redirected back to Alice. 
-
-Alice gets her capital protected; the protocol captures the attacker's prize. This is the **Equilibrium Shield**.
+**Aegis Prime flips the script.** We don't just "provide liquidity." We deploy a **Tactical Command Center** that detects toxic flow before it even lands and captures the attacker's margin as protocol profit.
 
 ---
 
-## 🛠️ Engineering Decision Log
-*   **Decision**: Use a **Dynamic Tax** instead of a **Kill-Switch (Pause)**.
-*   **Rationale**: Hard-pausing trade breaks the AMM experience. By using a 99.9% tax, we keep the pool technically "Live" but make it economically suicidal for toxic flow to enter, proving the specific power of Uniswap v4 Hook overrides.
-*   **Decision**: Implement **Reactive Mirroring (L1 -> L2)** for price truth.
-*   **Rationale**: We cannot depend on lagging on-chain oracles during a crisis. By bridging the **Reactive Sentinel** to the L1 pulse, we guarantee that the "Shield" is armed before the bots can land their transactions on Unichain.
+## ⚔️ The Combat Narrative: "Turning the Hunter into the Prey"
+
+### The Old World: The Defenseless LP
+Meet **Alice**, a passive LP. When a market crash strikes Ethereum Mainnet, Alice is in a "Dead Zone." Arbitrage bots see the crash milliseconds before the oracles. They race to hit her pool on Unichain, draining value before she even knows the market has moved. Alice takes the **Loss Versus Rebalancing (LVR)** and pays for the bot's luxury car.
+
+### The Aegis World: The Counter-Strike
+Alice deploys on **Aegis Prime**. She is no longer a victim; she is the **Maker of the Ambush**. 
+
+1.  **Surveillance**: Across the horizon, the **Reactive Sentinel** monitors the L1 sub-second pulse.
+2.  **Detection**: A crash hits. Before the first bot transaction even reaches the Unichain mempool, the Sentinel fires a cross-chain strike.
+3.  **The Trap**: The **Equilibrium Shield** arms instantly. The Aegis Hook overrides the pool fee with a **99.9% Dynamic Security Tax**.
+4.  **Margin Capture**: The bots arrive, expecting a feast. Instead, they hit the Shield. Their entire arbitrage margin is captured by the protocol and redirected back to Alice.
+
+**Alice isn't just protected. She's winning the PvP game.**
 
 ---
 
-## 🗺️ High-Level Architecture
+## 🗺️ Tactical Architecture
 
 ```mermaid
 graph TD
-    subgraph "Global Market (L1)"
-        O["MockOracle ($2000 -> $1000)"]
+    subgraph "The Arena (L1 Ethereum)"
+        O["MockOracle: Global Fair Price"]
     end
 
-    subgraph "Reactive Core"
-        S["Aegis Sentinel (Cross-Chain Eye)"]
+    subgraph "The Watchtower (Reactive Network)"
+        S["Reactive Sentinel: Autonomous Surveillance"]
     end
 
-    subgraph "Protected Pool (Unichain)"
-        H["Aegis Hook (Uniswap v4)"]
-        U["LP Pool Safety"]
+    subgraph "The Fortress (Unichain)"
+        H["Aegis Hook: Dynamic Fee Breach Defense"]
+        U["LP Security Lock: Margin Redirection"]
     end
 
-    O -- "Market Pulse" --> S
+    O -- "Sub-second Pulse" --> S
     S -- "triggerShield()" --> H
-    H -- "Atomic Margin Capture" --> U
+    H -- "Atomic Protection" --> U
 ```
 
 ---
 
-## 🏗️ The Architecture (Technical Deep-Dives)
+## 🏗️ Technical Command (Deep Dives)
 
-Aegis is built on three pillars of engineering excellence. Explore the deep technical specifications below:
+We don't settle for "standard" code. Every line is hardened for the cross-chain battlefield:
 
-*   **[🛡️ The Shield (Contracts)](./contracts/README.md)**: Explore the **Uniswap v4 Hook** logic, **Reactive Callback** handlers, and gas-saving storage optimizations.
-*   **[🧠 The Watchman (Relayer)](./frontend/relay.ts)**: Deep dive into the **Self-Healing Nonce Manager** and persistent state-sync engine.
-*   **[🎨 The Command Center (Frontend)](./frontend/README.md)**: Analyze the **High-Performance Multicall** architecture and tactical-reactive UI components.
+*   **[🎯 Tactical Contracts (The Shield)](./contracts/README.md)**: Explore the **Uniswap v4 Hook** implementation, high-fidelity security overrides, and the autonomous cross-chain callback engine.
+*   **[📡 The Command Center (Frontend)](./frontend/README.md)**: Deep dive into the **Unified PriceContext**, real-time radar HUD, and the high-performance Web3 stack.
+*   **[🛰️ The Radar (Relayer)](./frontend/relay.ts)**: Analyze the **Persistent State-Sync Engine** and self-healing nonce management.
 
 ---
 
-## 📍 Protocol Manifest
+## 📍 Protocol Manifest (Operational Addresses)
 
 ### 🌐 Unichain Sepolia (Chain ID: 1301)
-The primary execution environment for Aegis and Uniswap v4.
+*The battlefield where liquidity is defended.*
 
 | Component | Address |
 | :--- | :--- |
@@ -87,14 +79,14 @@ The primary execution environment for Aegis and Uniswap v4.
 | **PoolManager (v4)** | `0x00B036B58a818B1BC34d502D3fE730Db729e62AC` |
 
 ### 🌐 Ethereum Sepolia (L1 Reference)
-The source of global market catalysts monitored by the Sentinel.
+*The source of the global truth.*
 
 | Component | Address |
 | :--- | :--- |
 | **MockOracle** | `0xe7e31164b5b50a107dbab71de6edde5b7cb96c0d` |
 
 ### 🌐 Reactive Network (Lasna) (Chain ID: 5318007)
-The autonomous cross-chain automation layer.
+*The autonomous brain of the Sentinel.*
 
 | Component | Address |
 | :--- | :--- |
@@ -102,10 +94,10 @@ The autonomous cross-chain automation layer.
 
 ---
 
-## 🛡️ Enter the Tactical HUD
-1. Connect to **Unichain Sepolia**.
-2. Monitor the **Equilibrium Divergence Meter**.
-3. Watch the **Shield Status** verify the market truth in real-time.
+## 🛡️ Operational Status
+- **Current Mode**: **Defensive Hardened**
+- **Shield Type**: **Reactive Dynamic Hook**
+- **Target Network**: **Unichain / Reactive Ecosystem**
 
 ---
-© 2026 Aegis Protocol | Hardened by Senior Engineering
+© 2026 Aegis Prime Protocol | Hardened by Senior Engineering

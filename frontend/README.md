@@ -1,4 +1,4 @@
-# 🎨 Tactical Command Center (Frontend)
+# 🎨 Aegis Prime: Tactical Command Center (HUD)
 
 ```text
       _      _____  ____ ___ ____    ____  ____  ___ __  __ _____ 
@@ -8,32 +8,33 @@
   /_/   \_\ |_____|\____|___|____/  |_|   |_| \_\___|_|  |_|_____|
 ```
 
-The Command Center is a high-performance, glassmorphic dashboard designed for Aegis Prime. It provides liquidity providers with real-time **Tactical Intelligence** and an autonomous interface for pool defense.
+The Command Center is a high-performance, **Tactical Radar Interface** designed for the Aegis Prime Protocol. It provides Liquidity Providers with institutional-grade observability and immediate security intelligence.
 
 ---
 
-## 🏗️ Technical Architecture
+## 🏗️ Technical Architecture (The HUD)
 
-### 1. High-Density Observability
-The HUD is engineered to surface critical security metrics with sub-second latency:
-*   **Adaptive Divergence Meter**: Real-time visual tracking of the Basis Point (BP) gap between L1 Global Fair Price and L2 Pool Price.
-*   **Shield Status HUD**: Live feed showing the real-time protection state of the Equilibrium Shield.
-*   **Equilibrium Terminal**: A specialized swap engine that dynamically overrides swap estimates with the protocol's **Security Tax** during armed states.
+### 1. Sub-second Signal Processing
+The HUD is engineered for **Zero-Latency Intelligence**. It provides a real-time window into the cross-chain battlefield:
+*   **Adaptive Divergence Meter**: A high-fidelity visual radar tracking the BP (Basis Point) gap between the L1 Global Fair Price and the L2 Pool Price.
+*   **Shield Status Cockpit**: Immediate visual confirmation of the **Equilibrium Shield** state (STANDBY, ARMED, or ACTIVE).
+*   **Unified PriceContext**: A centralized React state engine that synchronizes the Header, Meter, and Trading Terminal, ensuring the entire HUD is a single, cohesive source of truth.
 
-### 2. High-Performance Web3 Stack
-*   **Framework**: Next.js 14+ (App Router).
-*   **State & Data**: `wagmi` + `viem` for robust contract interactions and multicall-optimized polling.
-*   **Motion**: `framer-motion` for fluid, high-frame-rate transitions between security states.
-*   **Styling**: Custom CSS tokens with sub-pixel glassmorphic effects for a premium, institutional feel.
+### 2. High-Fidelity Reactive Stack
+*   **Engine**: Next.js 14+ (App Router) for sub-pixel rendering.
+*   **Web3 Connectivity**: `wagmi` + `viem` optimized for high-frequency multicall polling from Unichain and Sepolia.
+*   **Tactical Motion**: `framer-motion` for hardware-accelerated transitions during security state shifts.
+*   **Aesthetics**: Senior-grade Glassmorphism. The interface is designed to feel like a premium, high-stakes military HUD.
 
 ---
 
-## 🛰️ Component Manifest
+## 🛰️ Dashboard Core Modules
 
-### 📍 Core Modules
-*   **`usePricePulse`**: The real-time data engine that aggregates cross-chain prices and security states.
-*   **`TradingView`**: The swap interface that dynamically responds to the Equilibrium Shield's tax logic.
-*   **`NetworkMonitor`**: A low-level system log reflecting raw events from Sepolia, Reactive, and Unichain.
+### 📍 Reactive Components
+*   **`PriceContext`**: The heart of the HUD. Manages global price truth and triggers instantaneous, synchronized updates across all UI segments.
+*   **`TradingView`**: The high-stakes execution terminal. Dynamically inherits security taxes from the Aegis Hook during market stress.
+*   **`NetworkMonitor`**: Low-level operational logs reflecting the autonomous strikes fired by the Reactive Network.
+*   **`OracleSim`**: The on-chain simulator that allows for stress-testing the protocol's recovery and protection tiers.
 
 ### 📍 Addresses (Sync)
 | Component | Chain | Address |
@@ -44,16 +45,12 @@ The HUD is engineered to surface critical security metrics with sub-second laten
 
 ---
 
-## 📦 Getting Started
+## 📦 Deployment Commands
 
-### 🏁 Prerequisites
-*   Node.js 18+
-*   NPM or PNPM
-
-### 🚀 Running the HUD
-1.  **Install**: `npm install`
-2.  **Start Dev Server**: `npm run dev`
-3.  **Deploy Sentinel Relayer**: `npm run relay` (Ensure `PRIVATE_KEY` is set in `.env.local`).
+### 🚀 Booting the Command Center
+1.  **Install Base**: `npm install`
+2.  **Launch Radar**: `npm run dev`
+3.  **Activate Sentinel Relayer**: `npm run relay` (Requires `PRIVATE_KEY` for autonomous sync).
 
 ---
-© 2026 Aegis Protocol | Hardened by Senior Engineering
+© 2026 Aegis Prime Protocol | Hardened by Senior Engineering
