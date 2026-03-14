@@ -1,98 +1,172 @@
+"use client"
+
 import { StatusCard } from '../components/StatusCard'
 import { OracleSim } from '../components/OracleSim'
 import { TradingView } from '../components/TradingView'
 import { NetworkMonitor } from '../components/NetworkMonitor'
 import { ConnectButton } from '../components/ConnectButton'
-import { ShieldCheck } from 'lucide-react'
+import { ShieldCheck, Zap, Activity, Info } from 'lucide-react'
+import { usePricePulse } from '../lib/usePricePulse'
+import { motion } from 'framer-motion'
 
 export default function Home() {
+  const { l1Price, l2Price, isArmed, divergence } = usePricePulse();
+
   return (
-    <main className="h-screen flex flex-col bg-[#050505] text-gray-300 overflow-hidden selection:bg-neon-purple/30">
+    <main className="h-screen flex flex-col bg-[#020204] text-gray-300 overflow-hidden selection:bg-neon-purple/30">
 
-      {/* Background Grid */}
-      <div className="fixed inset-0 z-0 opacity-[0.03] pointer-events-none"
-        style={{ backgroundImage: 'linear-gradient(#e0e0e0 1px, transparent 1px), linear-gradient(90deg, #e0e0e0 1px, transparent 1px)', backgroundSize: '40px 40px' }}
-      />
+      {/* Background Data Stream (Subtle) */}
+      <div className="fixed inset-0 z-0 opacity-[0.02] pointer-events-none overflow-hidden">
+        <div className="absolute top-0 left-1/4 w-px h-full bg-linear-to-b from-transparent via-cyan-500 to-transparent animate-pulse" style={{ animationDuration: '4s' }} />
+        <div className="absolute top-0 right-1/4 w-px h-full bg-linear-to-b from-transparent via-purple-500 to-transparent animate-pulse" style={{ animationDuration: '7s' }} />
+      </div>
 
-      <div className="relative z-10 flex-1 flex flex-col max-w-[1800px] mx-auto w-full p-4 lg:p-6 h-full">
+      <div className="relative z-10 flex-1 flex flex-col max-w-[1800px] mx-auto w-full p-3 lg:p-4 h-full">
 
-        {/* Header - Compact */}
-        <header className="flex items-center justify-between mb-4 shrink-0 border-b border-white/5 pb-4">
-          <div className="flex items-center gap-4">
-            <div className="w-10 h-10 bg-linear-to-br from-indigo-600 to-purple-700 rounded-xl flex items-center justify-center shadow-[0_0_20px_rgba(123,47,247,0.3)] border border-white/10">
-              <ShieldCheck className="w-6 h-6 text-white" />
+        {/* Global HUD Header */}
+        <header className="flex items-center justify-between mb-4 shrink-0 glass-panel p-3 rounded-xl border-white/5">
+          <div className="flex items-center gap-6">
+            <div className="flex items-center gap-3">
+              <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-500 ${isArmed ? 'bg-red-500/20 text-red-400 shadow-[0_0_20px_rgba(239,68,68,0.3)]' : 'bg-indigo-600/10 text-indigo-400 border border-white/10'}`}>
+                <ShieldCheck className="w-5 h-5" />
+              </div>
+              <div className="flex flex-col">
+                <h1 className="text-xl font-black tracking-tighter font-cyber flex items-center gap-2">
+                  AEGIS <span className={isArmed ? 'text-red-500' : 'text-neon-purple'}>PRIME</span>
+                </h1>
+                <span className="text-[10px] uppercase tracking-tighter text-gray-500 font-mono">Autonomous Liquidity Protection</span>
+              </div>
             </div>
-            <div>
-              <h1 className="text-3xl font-black tracking-tight font-cyber bg-clip-text text-transparent bg-linear-to-r from-white via-white to-gray-400">
-                AEGIS <span className="text-neon-purple drop-shadow-[0_0_15px_rgba(168,85,247,0.5)]">PRIME</span>
-              </h1>
+
+            <div className="h-8 w-px bg-white/10 hidden md:block" />
+
+            <div className="hidden md:flex items-center gap-8">
+              <div className="flex flex-col">
+                <span className="text-[9px] uppercase text-gray-500 font-mono">Global Fair Price</span>
+                <span className="text-sm font-bold text-white font-cyber">${l1Price.toLocaleString()}</span>
+              </div>
+              <div className="flex flex-col">
+                <span className="text-[9px] uppercase text-gray-500 font-mono">L2 Pool Price</span>
+                <span className="text-sm font-bold text-neon-cyan font-cyber">${l2Price.toLocaleString()}</span>
+              </div>
+              <div className="flex flex-col">
+                <span className="text-[9px] uppercase text-gray-500 font-mono">Market Gap</span>
+                <span className={`text-sm font-bold font-cyber ${divergence > 500 ? 'text-red-500' : 'text-green-500'}`}>
+                  {divergence.toFixed(2)} BP
+                </span>
+              </div>
             </div>
           </div>
-          <div className="flex items-center gap-6">
-            <div className="hidden md:flex gap-4 text-xs font-mono text-gray-500">
-              <span>ETH/USD: <span className="text-neon-cyan">$2000</span></span>
-              <span>GAS: <span className="text-neon-purple">12 Gwei</span></span>
+
+          <div className="flex items-center gap-4">
+            <div className={`px-3 py-1 rounded-full border text-[10px] font-bold font-cyber ${isArmed ? 'bg-red-500/10 border-red-500/30 text-red-500 pulse' : 'bg-green-500/10 border-green-500/30 text-green-500'}`}>
+              {isArmed ? 'SHIELD ARMED' : 'PROTOCOL SECURE'}
             </div>
             <ConnectButton />
           </div>
         </header>
 
-        {/* Dashboard Grid - 3 Columns */}
-        <div className="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-6 min-h-0">
+        {/* Tactical Command Grid */}
+        <div className="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-4 min-h-0">
 
-          {/* Left Column (3) - Controls */}
-          <div className="lg:col-span-3 flex flex-col gap-3 overflow-y-auto pl-2 pr-1 scrollbar-hide">
-
-            {/* Status */}
-            <div className="flex items-center gap-2 mb-0.5">
-              <div className="w-1.5 h-1.5 bg-neon-green rounded-full shadow-[0_0_8px_#10b981]" />
-              <span className="text-[9px] font-cyber text-gray-500 uppercase tracking-widest">Sentinel</span>
-            </div>
-            <div className="shrink-0">
+          {/* Left Sidebar: Monitoring & Consensus (Col 3) */}
+          <div className="lg:col-span-3 flex flex-col gap-4 overflow-y-auto">
+            <section className="flex flex-col gap-2">
+              <div className="flex items-center justify-between px-2">
+                <span className="text-[10px] font-cyber text-gray-400 uppercase tracking-widest flex items-center gap-2">
+                  <Activity className="w-3 h-3 text-neon-purple" />
+                  Security Engine
+                </span>
+              </div>
               <StatusCard />
-            </div>
+            </section>
 
-            {/* Oracle Control */}
-            <div className="flex items-center gap-2 mb-0.5 mt-1">
-              <div className="w-1.5 h-1.5 bg-neon-purple rounded-full shadow-[0_0_8px_#8b5cf6]" />
-              <span className="text-[9px] font-cyber text-gray-500 uppercase tracking-widest">Simulation</span>
-            </div>
-            <div className="shrink-0 h-[280px]">
-              <OracleSim />
-            </div>
-
-            {/* How it works (Hidden on short screens to prevent scroll) */}
-            <div className="p-3 rounded-xl glass-panel border border-white/5 mt-auto hidden xl:block 2xl:block">
-              <h4 className="font-bold text-gray-400 mb-2 font-cyber text-xs uppercase">Sequence</h4>
-              <ul className="space-y-2 text-[10px] text-gray-500 font-mono">
-                <li className="flex gap-2">
-                  <span className="text-neon-purple">01.</span> OracleSim crashes Price
-                </li>
-                <li className="flex gap-2">
-                  <span className="text-white">02.</span> Sentinel Signals L2
-                </li>
-                <li className="flex gap-2">
-                  <span className="text-neon-cyan">03.</span> Unichain Hook Locks Pool
-                </li>
-              </ul>
-            </div>
+            <section className="flex flex-col gap-2 flex-1 min-h-0">
+               <div className="flex items-center justify-between px-2">
+                <span className="text-[10px] font-cyber text-gray-400 uppercase tracking-widest flex items-center gap-2">
+                  <Zap className="w-3 h-3 text-neon-cyan" />
+                  Consensus Feed
+                </span>
+              </div>
+              <div className="flex-1 min-h-0">
+                <NetworkMonitor />
+              </div>
+            </section>
           </div>
 
-          {/* Center Column (9) - The Action */}
-          <div className="lg:col-span-9 flex flex-col gap-4 overflow-y-auto px-1 scrollbar-hide">
-            {/* Trading View - Centered vertically if space allows, or at top */}
-            <div className="flex-1 flex flex-col justify-center">
+          {/* Main Terminal: Trading & Divergence (Col 6) */}
+          <div className="lg:col-span-6 flex flex-col gap-4 min-h-0">
+            {/* Divergence Meter (NEW UX) */}
+            <div className="glass-panel rounded-2xl p-6 border-white/5 flex flex-col items-center justify-center relative overflow-hidden shrink-0">
+               <div className="absolute inset-0 bg-linear-to-b from-indigo-500/5 to-transparent pointer-events-none" />
+               <div className="text-[10px] font-cyber text-gray-500 uppercase tracking-[0.2em] mb-4">Equilibrium Divergence Meter</div>
+               
+               <div className="w-full h-12 bg-white/5 rounded-full relative overflow-hidden border border-white/10 p-1">
+                  <motion.div 
+                    initial={{ width: 0 }}
+                    animate={{ width: `${Math.min((divergence / 1000) * 100, 100)}%` }}
+                    className={`h-full rounded-full transition-colors duration-500 ${divergence > 500 ? 'bg-red-500 shadow-[0_0_20px_rgba(239,68,68,0.5)]' : 'bg-neon-cyan shadow-[0_0_20px_rgba(0,212,255,0.5)]'}`}
+                  />
+                  <div className="absolute inset-0 flex items-center justify-between px-4 text-[10px] font-mono text-white/40 pointer-events-none">
+                    <span>0 BP</span>
+                    <span>250 BP</span>
+                    <span>500 BP (CRITICAL)</span>
+                    <span>1000 BP</span>
+                  </div>
+               </div>
+
+               <div className="mt-4 flex gap-8">
+                  <div className="text-center">
+                    <div className="text-2xl font-black text-white font-cyber">{divergence.toFixed(0)}</div>
+                    <div className="text-[8px] text-gray-500 uppercase font-mono">Pips Offset</div>
+                  </div>
+                  <div className="text-center">
+                    <div className={`text-2xl font-black font-cyber ${isArmed ? 'text-red-500 animate-pulse' : 'text-neon-purple'}`}>
+                      {isArmed ? `${Math.min(divergence / 100 + 0.5, 99.9).toFixed(1)}%` : '0.3%'}
+                    </div>
+                    <div className="text-[8px] text-gray-500 uppercase font-mono">Dynamic Fee</div>
+                  </div>
+               </div>
+            </div>
+
+            {/* Trading HUD */}
+            <div className="flex-1 glass-panel rounded-2xl p-4 border-white/5 min-h-0 flex flex-col">
               <TradingView />
             </div>
           </div>
 
-          {/* Right Column (3) - The Feed */}
-          <div className="lg:col-span-3 flex flex-col h-full overflow-hidden">
-            <div className="flex items-center gap-2 mb-3">
-              <div className="w-1.5 h-1.5 bg-neon-cyan rounded-full shadow-[0_0_8px_#00d4ff] animate-pulse" />
-              <span className="text-[10px] font-cyber text-gray-500 uppercase tracking-widest">Reactive Feed</span>
-            </div>
-            <NetworkMonitor />
+          {/* Right Sidebar: Simulation (Col 3) */}
+          <div className="lg:col-span-3 flex flex-col gap-4">
+             <section className="flex flex-col gap-2">
+                <div className="flex items-center justify-between px-2">
+                  <span className="text-[10px] font-cyber text-gray-400 uppercase tracking-widest flex items-center gap-2">
+                    <Activity className="w-3 h-3 text-neon-purple" />
+                    Market Simulator
+                  </span>
+                  <Info className="w-3 h-3 text-gray-600" />
+                </div>
+                <div className="h-[320px]">
+                  <OracleSim />
+                </div>
+              </section>
+
+              <div className="p-4 rounded-xl bg-indigo-500/5 border border-indigo-500/10 flex-1">
+                <h4 className="text-[10px] font-cyber text-indigo-400 uppercase mb-3 tracking-widest">Protocol Intelligence</h4>
+                <div className="space-y-3">
+                  <div className="flex justify-between items-center text-[10px] font-mono">
+                    <span className="text-gray-500">Shield Status</span>
+                    <span className={isArmed ? 'text-red-500' : 'text-green-500'}>{isArmed ? 'ARMED' : 'STANDBY'}</span>
+                  </div>
+                  <div className="flex justify-between items-center text-[10px] font-mono">
+                    <span className="text-gray-500">Hook Version</span>
+                    <span className="text-white">v4.0.1-EQUIL</span>
+                  </div>
+                  <div className="flex justify-between items-center text-[10px] font-mono">
+                    <span className="text-gray-500">Anti-MEV Mode</span>
+                    <span className="text-neon-cyan">DYNAMIC TAX</span>
+                  </div>
+                </div>
+              </div>
           </div>
 
         </div>

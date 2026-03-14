@@ -6,55 +6,54 @@
     / _ \   |  _| | |  _ | |\___ \  | |_) | |_) || || |\/| |  _|  
    / ___ \  | |___| |_| || | ___) | |  __/|  _ < | || |  | | |___ 
   /_/   \_\ |_____|\____|___|____/  |_|   |_| \_\___|_|  |_|_____|
-                                                                  
 ```
 
 The Command Center is a high-performance, glassmorphic dashboard designed for Aegis Prime. It provides liquidity providers with real-time **Tactical Intelligence** and an autonomous interface for pool defense.
 
 ---
 
-## 🏗️ High-Fidelity Technical Architecture
+## 🏗️ Technical Architecture
 
-The frontend is engineered for sub-second reactivity and high-density data visualization without saturating RPC bandwidth.
+### 1. High-Density Observability
+The HUD is engineered to surface critical security metrics with sub-second latency:
+*   **Adaptive Divergence Meter**: Real-time visual tracking of the Basis Point (BP) gap between L1 Global Fair Price and L2 Pool Price.
+*   **Shield Status HUD**: Live feed showing the real-time protection state of the Equilibrium Shield.
+*   **Equilibrium Terminal**: A specialized swap engine that dynamically overrides swap estimates with the protocol's **Security Tax** during armed states.
 
-### 1. Performance-Optimized Data Layer (`viem/multicall`)
-The dashboard implements a specialized "Batching" pattern to handle multi-chain state synchronization:
-*   **Multicall Scaling**: By using `viem/multicall`, the dashboard collapses sequential reputation and identity queries from Unichain and Sepolia into single batched requests. 
-    *   **Efficiency**: Collapsing N requests into 1 reduces the RTT (Round Trip Time) latency by **~80%**.
-    *   **Consistency**: Ensures that all protocol data (Hook status, Consensus progress, and Guardian reputation) is synchronized to the **exact same block height**, preventing UI "flicker."
-
-### 2. Zero-Latency Reactivity
-The user experience is built on a "Reactivity First" philosophy:
-*   **Atomic State Management**: Specifically designed for the "Aegis Prime HUD," the dashboard automatically detects cross-chain consensus events. It transitions the UI state seamlessly from **Monitoring** to **Tactical Defense** without requiring a page refresh.
-*   **Real-Time Consensus Feed**: Utilizing an optimized polling hook, the HUD monitors the Reactive Network for verification stages (1/2 -> 2/2). It provides high-fidelity visual feedback as the protocol arms its dynamic tax logic.
-
----
-
-## 🛠️ Tactical Manifest
-
-### 🌐 Unichain Sepolia (Chain ID: 1301)
-*   **AegisHook (V4)**: `0xc132ff984a4e15b1e2c885092ae73f6a5ad54080`
-
-### 🌐 Ethereum Sepolia (L1 Trigger)
-*   **MockOracle**: `0xE7e31164b5B50a107dbaB71de6EDde5B7Cb96c0d`
-
-### 🌐 Reactive Network (Lasna) (Chain ID: 5318007)
-*   **AegisSentinel**: `0xBdE05919CE1ee2E20502327fF74101A8047c37be`
+### 2. High-Performance Web3 Stack
+*   **Framework**: Next.js 14+ (App Router).
+*   **State & Data**: `wagmi` + `viem` for robust contract interactions and multicall-optimized polling.
+*   **Motion**: `framer-motion` for fluid, high-frame-rate transitions between security states.
+*   **Styling**: Custom CSS tokens with sub-pixel glassmorphic effects for a premium, institutional feel.
 
 ---
 
-## 🛠️ Technical Stack
-*   **Framework**: Next.js 16 (App Router)
-*   **Web3 Engine**: Wagmi + Viem + TanStack Query
-*   **Animation**: Framer Motion (Tactical Transitions)
-*   **Styling**: Vanilla CSS + Glassmorphism Tokens
+## 🛰️ Component Manifest
+
+### 📍 Core Modules
+*   **`usePricePulse`**: The real-time data engine that aggregates cross-chain prices and security states.
+*   **`TradingView`**: The swap interface that dynamically responds to the Equilibrium Shield's tax logic.
+*   **`NetworkMonitor`**: A low-level system log reflecting raw events from Sepolia, Reactive, and Unichain.
+
+### 📍 Addresses (Sync)
+| Component | Chain | Address |
+| :--- | :--- | :--- |
+| **AegisHook** | Unichain Sepolia | `0xc9d1fed83361fa922d5d479071d2957029ca8080` |
+| **MockOracle** | Ethereum Sepolia | `0xe7e31164b5b50a107dbab71de6edde5b7cb96c0d` |
+| **AegisSentinel**| Reactive Network | `0x0f764437ffbe1fcd0d0d276a164610422710b482` |
 
 ---
 
-## 📦 Setup & Operations
-1. `npm install`
-2. `npm run relay`
-3. `npm run dev`
+## 📦 Getting Started
+
+### 🏁 Prerequisites
+*   Node.js 18+
+*   NPM or PNPM
+
+### 🚀 Running the HUD
+1.  **Install**: `npm install`
+2.  **Start Dev Server**: `npm run dev`
+3.  **Deploy Sentinel Relayer**: `npm run relay` (Ensure `PRIVATE_KEY` is set in `.env.local`).
 
 ---
 © 2026 Aegis Protocol | Hardened by Senior Engineering

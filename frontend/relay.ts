@@ -60,79 +60,88 @@ async function checkAndRelay() {
             lastProcessedBlock = currentBlock - START_OFFSET;
         }
 
-        if (currentBlock <= lastProcessedBlock) return;
+        // 1. Fetch Latest On-Chain Armed State (The Source of Truth)
+        const onChainArmed = await unichainPublic.readContract({
+            address: DEPLOYED_ADDRESSES.AEGIS_HOOK as `0x${string}`,
+            abi: AEGIS_HOOK_ABI,
+            functionName: 'sentinelArmed'
+        }) as boolean;
 
-        const toBlock = currentBlock > lastProcessedBlock + BigInt(MAX_BLOCK_RANGE) 
-            ? lastProcessedBlock + BigInt(MAX_BLOCK_RANGE) 
-            : currentBlock;
-
-        console.log(`🔍 Polling Sepolia range: [${lastProcessedBlock + 1n} - ${toBlock}]`);
-
-        const logs = await sepoliaClient.getLogs({
+        // 2. Fetch Latest Price from Oracle
+        const latestPrice = await sepoliaClient.readContract({
             address: DEPLOYED_ADDRESSES.MOCK_ORACLE as `0x${string}`,
-            event: parseAbiItem('event PriceUpdate(uint256 indexed newPrice, uint256 timestamp, address indexed updater)'),
-            fromBlock: lastProcessedBlock + 1n,
-            toBlock: toBlock
-        });
+            abi: MOCK_ORACLE_ABI,
+            functionName: 'price'
+        }) as bigint;
 
-        if (logs.length > 0) {
-            console.log(`\n📨 Found ${logs.length} new Price Updates!`);
-            
-            if (currentArmedState === null) {
-                currentArmedState = await unichainPublic.readContract({
-                    address: DEPLOYED_ADDRESSES.AEGIS_HOOK as `0x${string}`,
-                    abi: AEGIS_HOOK_ABI,
-                    functionName: 'sentinelArmed'
-                });
-            }
+        const ethPrice = formatEther(latestPrice);
+        const ethPriceNum = Number(ethPrice);
+        const targetArmed = ethPriceNum < 1500;
 
-            for (const log of logs) {
-                const { newPrice } = (log as any).args;
-                const ethPrice = formatEther(newPrice);
-                const ethPriceFixed = Number(ethPrice).toFixed(0);
+        console.log(`[DEBUG] Price: $${ethPriceNum} | Target: ${targetArmed ? "ARM" : "SECURE"} | On-Chain: ${onChainArmed ? "ARMED" : "STABLE"}`);
 
-                console.log(`   -> Global Signal: $${ethPriceFixed}`);
-
-                if (Number(ethPriceFixed) < 1500) {
-                    console.warn(`🚨 EQUILIBRIUM BREACH: Syncing Global Price $${ethPriceFixed} to Unichain...`);
-                    currentArmedState = true; 
-                    await _syncEquilibrium(newPrice, true);
-                } 
-                else if (currentArmedState) {
-                    console.info("✅ MARKET STABILIZED: Restoring Normal Equilibrium...");
-                    currentArmedState = false;
-                    await _syncEquilibrium(newPrice, false);
-                }
+        // 3. PERSISTENT SYNC: If On-Chain state != Target State, Fix it!
+        if (onChainArmed !== targetArmed) {
+            console.warn(`🚨 STATE MISMATCH DETECTED: Rectifying on Unichain...`);
+            const success = await _syncEquilibrium(latestPrice, targetArmed);
+            if (success) {
+                currentArmedState = targetArmed;
             }
         }
 
-        lastProcessedBlock = toBlock;
+        // 4. Log Polling (for historical console output only)
+        if (currentBlock > lastProcessedBlock) {
+            const toBlock = currentBlock > lastProcessedBlock + BigInt(MAX_BLOCK_RANGE) 
+                ? lastProcessedBlock + BigInt(MAX_BLOCK_RANGE) 
+                : currentBlock;
+
+            const logs = await sepoliaClient.getLogs({
+                address: DEPLOYED_ADDRESSES.MOCK_ORACLE as `0x${string}`,
+                event: parseAbiItem('event PriceUpdate(uint256 indexed newPrice, uint256 timestamp, address indexed updater)'),
+                fromBlock: lastProcessedBlock + 1n,
+                toBlock: toBlock
+            });
+
+            if (logs.length > 0) {
+                console.log(`\n📊 Polled ${logs.length} events. Market Status: ${targetArmed ? "⚠️ BREACH" : "✅ STABLE"} ($${ethPriceNum.toFixed(0)})`);
+            }
+            lastProcessedBlock = toBlock;
+        }
 
     } catch (e: any) {
         process.stdout.write("⚠️");
-        if (e.message.includes("429") || e.message.includes("fetch")) {
-            // Transient error
-        } else {
-            console.error("\n❌ Critical Relay Error:", e.message);
+        const msg = e.message || "";
+        if (!msg.includes("429") && !msg.includes("fetch")) {
+            console.error("\n❌ Relay Error:", msg);
         }
     } finally {
         isRelaying = false;
     }
 }
 
-// --- Internal Workflows ---
-
 async function _syncEquilibrium(price: bigint, status: boolean) {
     try {
+        // Fetch fresh nonce to avoid "lower than current nonce" errors on Unichain Sepolia
+        const nonce = await unichainPublic.getTransactionCount({ 
+            address: account.address 
+        });
+
         const hash = await unichainWallet.writeContract({
             address: DEPLOYED_ADDRESSES.AEGIS_HOOK as `0x${string}`,
             abi: AEGIS_HOOK_ABI,
             functionName: 'setL1Price',
-            args: [price, status]
+            args: [price, status],
+            nonce // Force fresh nonce
         });
-        console.log(`🛡️  Equilibrium Synced: $${formatEther(price)} | Armed: ${status} | Tx: ${hash}`);
+        
+        console.info(`🛡️  Equilibrium Synced: $${formatEther(price)} | Armed: ${status} | Tx: ${hash}`);
+        return true;
     } catch (e: any) {
-        console.error("❌ Failed to sync Equilibrium:", e.shortMessage || e.message);
+        const errorMsg = e.shortMessage || e.message;
+        console.error("❌ Failed to sync Equilibrium:", errorMsg);
+        
+        // If it's a nonce error, the next interval will retry with a fresh fetch anyway
+        return false;
     }
 }
 

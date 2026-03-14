@@ -5,14 +5,18 @@ import {BaseHook} from "v4-periphery/src/utils/BaseHook.sol";
 import {IPoolManager} from "v4-core/src/interfaces/IPoolManager.sol";
 import {Hooks} from "v4-core/src/libraries/Hooks.sol";
 import {PoolKey} from "v4-core/src/types/PoolKey.sol";
-import {
-    BeforeSwapDelta,
-    BeforeSwapDeltaLibrary
-} from "v4-core/src/types/BeforeSwapDelta.sol";
+import {BeforeSwapDelta, BeforeSwapDeltaLibrary} from "v4-core/src/types/BeforeSwapDelta.sol";
 import {SwapParams} from "v4-core/src/types/PoolOperation.sol";
+import {PoolId, PoolIdLibrary} from "v4-core/src/types/PoolId.sol";
+import {StateLibrary} from "v4-core/src/libraries/StateLibrary.sol";
+import {FullMath} from "v4-core/src/libraries/FullMath.sol";
+import {LPFeeLibrary} from "v4-core/src/libraries/LPFeeLibrary.sol";
+import {console} from "forge-std/console.sol";
 
 contract AegisHook is BaseHook {
     using BeforeSwapDeltaLibrary for BeforeSwapDelta;
+    using PoolIdLibrary for PoolKey;
+    using StateLibrary for IPoolManager;
 
     uint256 public l1Price; // Verified price from Ethereum Sepolia
     bool public sentinelArmed; // Consensus arming flag
@@ -87,24 +91,24 @@ contract AegisHook is BaseHook {
         uint24 fee = DEFAULT_FEE;
 
         if (sentinelArmed && l1Price > 0) {
-            // 1. Fetch current L2 state from PoolManager
+            // 1. Fetch current L2 state from PoolManager using StateLibrary
             (uint160 sqrtPriceX96, , , ) = poolManager.getSlot0(key.toId());
             
-            // 2. Convert sqrtPriceX96 to L2 Price (simplified for 18 decimal pairs)
-            // Price = (sqrtPriceX96 / 2^96)^2
-            // We scale by 1e18 to maintain precision
-            uint256 l2Price = (uint256(sqrtPriceX96) * uint256(sqrtPriceX96) * 1e18) >> (96 * 2);
+            // 2. Convert sqrtPriceX96 to L2 Price (using mulDiv to avoid intermediate overflow)
+            uint256 l2Price = FullMath.mulDiv(uint256(sqrtPriceX96) * uint256(sqrtPriceX96), 1e18, 1 << 192);
+            console.log("L2 Price:", l2Price);
+            console.log("L1 Price:", l1Price);
 
-            // 3. Calculate Divergence (using 1e18 scaling for 100%)
+            // 3. Calculate Divergence (using 1e6 scaling for BP)
             if (l2Price > l1Price) {
                 uint256 priceDiff = l2Price - l1Price;
-                uint256 divergenceBasisPoints = (priceDiff * 1000000) / l2Price;
+                uint256 divergenceBP = (priceDiff * 1_000_000) / l2Price;
+                console.log("Divergence (BP):", divergenceBP);
                 
-                // 4. Set fee to neutralize arbitrage profit + safety buffer
-                // divergenceBasisPoints is in 1,000,000 scale (10,000 = 1%)
-                fee = uint24(divergenceBasisPoints) + BUFFER_FEE;
+                // 4. Set Fee = Divergence + 0.05% safety buffer
+                fee = uint24(divergenceBP + BUFFER_FEE); 
                 
-                // Cap fee at 99%
+                // Cap at 99%
                 if (fee > 990000) fee = 990000;
             }
         }
@@ -112,7 +116,7 @@ contract AegisHook is BaseHook {
         return (
             BaseHook.beforeSwap.selector,
             BeforeSwapDeltaLibrary.ZERO_DELTA,
-            fee | 0x800000
+            fee | LPFeeLibrary.OVERRIDE_FEE_FLAG
         );
     }
 }

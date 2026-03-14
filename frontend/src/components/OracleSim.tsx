@@ -53,6 +53,28 @@ export function OracleSim() {
         })
     }
 
+    const handleDrift = () => {
+        setLastAction('crash')
+        writeContract({
+            address: DEPLOYED_ADDRESSES.MOCK_ORACLE as `0x${string}`,
+            abi: MOCK_ORACLE_ABI,
+            functionName: 'setPrice',
+            args: [1900n * 10n ** 18n], // 1900 ETH price (500 BP)
+            chainId: sepolia.id
+        })
+    }
+
+    const handleSteep = () => {
+        setLastAction('crash')
+        writeContract({
+            address: DEPLOYED_ADDRESSES.MOCK_ORACLE as `0x${string}`,
+            abi: MOCK_ORACLE_ABI,
+            functionName: 'setPrice',
+            args: [1800n * 10n ** 18n], // 1800 ETH price (1000 BP)
+            chainId: sepolia.id
+        })
+    }
+
     const handleStabilize = () => {
         setLastAction('stabilize')
         writeContract({
@@ -85,28 +107,46 @@ export function OracleSim() {
                         Threshold: $1,500
                     </div>
                     <div className="text-[8px] font-mono text-indigo-400 bg-indigo-500/5 px-2 py-0.5 rounded border border-indigo-500/10 uppercase tracking-widest">
-                        Aegis Prime: 2-Step Verification
+                        Aegis Prime: Direct Detection
                     </div>
                 </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
-                <button
-                    onClick={handleCrash}
-                    disabled={!isConnected || isPending || isConfirming}
-                    className="btn-cyber flex flex-col items-center justify-center p-3 rounded-xl bg-red-500/10 border border-red-500/30 hover:bg-red-500/20 hover:border-red-500 hover:scale-[1.02] disabled:opacity-50 disabled:scale-100 group"
-                >
-                    <TrendingDown className="w-5 h-5 text-red-500 mb-1 group-hover:scale-110 transition-transform" />
-                    <span className="text-[10px] font-bold text-red-400">CRASH</span>
-                </button>
-
+            <div className="grid grid-cols-2 gap-2">
                 <button
                     onClick={handleStabilize}
                     disabled={!isConnected || isPending || isConfirming}
-                    className="btn-cyber flex flex-col items-center justify-center p-3 rounded-xl bg-neon-green/10 border border-neon-green/30 hover:bg-neon-green/20 hover:border-neon-green hover:scale-[1.02] disabled:opacity-50 disabled:scale-100 group"
+                    className="btn-cyber flex flex-col items-center justify-center py-2 rounded-lg bg-neon-green/10 border border-neon-green/30 hover:bg-neon-green/20 hover:border-neon-green disabled:opacity-50"
                 >
-                    <TrendingUp className="w-5 h-5 text-neon-green mb-1 group-hover:scale-110 transition-transform" />
-                    <span className="text-[10px] font-bold text-neon-green">STABILIZE</span>
+                    <span className="text-[8px] font-bold text-neon-green uppercase mb-0.5">Restore</span>
+                    <span className="text-[7px] font-mono opacity-60 text-neon-green">$2000</span>
+                </button>
+
+                <button
+                    onClick={handleDrift}
+                    disabled={!isConnected || isPending || isConfirming}
+                    className="btn-cyber flex flex-col items-center justify-center py-2 rounded-lg bg-orange-500/10 border border-orange-500/30 hover:bg-orange-500/20 hover:border-orange-500 disabled:opacity-50"
+                >
+                    <span className="text-[8px] font-bold text-orange-400 uppercase mb-0.5">Drift</span>
+                    <span className="text-[7px] font-mono opacity-60 text-orange-400">500 BP</span>
+                </button>
+
+                <button
+                    onClick={handleSteep}
+                    disabled={!isConnected || isPending || isConfirming}
+                    className="btn-cyber flex flex-col items-center justify-center py-2 rounded-lg bg-red-400/10 border border-red-400/30 hover:bg-red-400/20 hover:border-red-400 disabled:opacity-50"
+                >
+                    <span className="text-[8px] font-bold text-red-400 uppercase mb-0.5">Steep</span>
+                    <span className="text-[7px] font-mono opacity-60 text-red-400">1100 BP</span>
+                </button>
+
+                <button
+                    onClick={handleCrash}
+                    disabled={!isConnected || isPending || isConfirming}
+                    className="btn-cyber flex flex-col items-center justify-center py-2 rounded-lg bg-red-600/20 border border-red-600/40 hover:bg-red-600/30 hover:border-red-600 disabled:opacity-50"
+                >
+                    <span className="text-[8px] font-bold text-red-600 uppercase mb-0.5">Crash</span>
+                    <span className="text-[7px] font-mono opacity-60 text-red-600">LIMIT</span>
                 </button>
             </div>
 

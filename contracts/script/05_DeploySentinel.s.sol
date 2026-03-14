@@ -14,7 +14,6 @@ contract DeploySentinel is Script {
         address REACTIVE_SYSTEM_SERVICE = vm.envOr("REACTIVE_SERVICE", address(0x0000000000000000000000000000000000fffFfF));
         address AEGIS_HOOK = vm.envAddress("AEGIS_HOOK");
         address MOCK_ORACLE = vm.envAddress("MOCK_ORACLE");
-        address GUARDIAN_REGISTRY = vm.envAddress("GUARDIAN_REGISTRY");
 
         AegisSentinel sentinel = new AegisSentinel(
             REACTIVE_SYSTEM_SERVICE,
@@ -26,9 +25,6 @@ contract DeploySentinel is Script {
         // Call subscriptions
         sentinel.subscribeToOracle(MOCK_ORACLE);
         console.log("Subscribed to MockOracle at:", MOCK_ORACLE);
-
-        sentinel.subscribeToRegistry(GUARDIAN_REGISTRY);
-        console.log("Subscribed to GuardianRegistry at:", GUARDIAN_REGISTRY);
 
         vm.stopBroadcast();
     }
