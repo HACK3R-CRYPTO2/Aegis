@@ -2,11 +2,11 @@
 
 import { Zap, Wallet, Settings, ShieldAlert, ArrowDown, Info } from 'lucide-react'
 import { useState, useEffect } from 'react'
-import { usePricePulse } from '../lib/usePricePulse'
+import { usePriceContext } from '../lib/PriceContext'
 import { motion, AnimatePresence } from 'framer-motion'
 
 export function TradingView() {
-    const { l1Price, l2Price, isArmed, divergence } = usePricePulse();
+    const { l1Price, l2Price, isArmed, divergence } = usePriceContext();
 
     const [amount, setAmount] = useState<string>("")
     const [isSwapping, setIsSwapping] = useState(false)

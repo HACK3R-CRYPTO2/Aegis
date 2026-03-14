@@ -6,11 +6,11 @@ import { TradingView } from '../components/TradingView'
 import { NetworkMonitor } from '../components/NetworkMonitor'
 import { ConnectButton } from '../components/ConnectButton'
 import { ShieldCheck, Zap, Activity, Info } from 'lucide-react'
-import { usePricePulse } from '../lib/usePricePulse'
+import { usePriceContext } from '../lib/PriceContext'
 import { motion } from 'framer-motion'
 
 export default function Home() {
-  const { l1Price, l2Price, isArmed, divergence } = usePricePulse();
+  const { l1Price, l2Price, isArmed, divergence } = usePriceContext();
 
   return (
     <main className="h-screen flex flex-col bg-[#020204] text-gray-300 overflow-hidden selection:bg-neon-purple/30">

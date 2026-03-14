@@ -5,11 +5,11 @@ import { AEGIS_SENTINEL_ABI } from '../lib/abis'
 import { DEPLOYED_ADDRESSES, CHAINS } from '../lib/addresses'
 import { useState, useEffect } from 'react'
 import { Shield, AlertTriangle, Activity, Database, Server } from 'lucide-react'
-import { usePricePulse } from '../lib/usePricePulse'
+import { usePriceContext } from '../lib/PriceContext'
 import { motion } from 'framer-motion'
 
 export function StatusCard() {
-    const { isArmed, divergence } = usePricePulse();
+    const { isArmed, divergence } = usePriceContext();
 
     const { data: confirmations } = useReadContract({
         address: DEPLOYED_ADDRESSES.AEGIS_SENTINEL as `0x${string}`,

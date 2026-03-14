@@ -7,12 +7,12 @@ import { sepolia } from '../lib/config'
 import { TrendingDown, TrendingUp, Activity } from 'lucide-react'
 import { formatEther } from 'viem'
 import { useEffect, useState } from 'react'
-import { usePricePulse } from '../lib/usePricePulse'
+import { usePriceContext } from '../lib/PriceContext'
 import confetti from 'canvas-confetti'
 
 export function OracleSim() {
     const { address, isConnected } = useAccount()
-    const { l1Price, setL1Price } = usePricePulse() // Added hydration from hook
+    const { l1Price, setL1Price } = usePriceContext() // Added hydration from hook
     const { data: price, refetch } = useReadContract({
         address: DEPLOYED_ADDRESSES.MOCK_ORACLE as `0x${string}`,
         abi: MOCK_ORACLE_ABI,
