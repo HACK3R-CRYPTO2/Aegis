@@ -20,6 +20,11 @@ export function StatusCard() {
     })
 
     const [mounted, setMounted] = useState(false)
+
+    useEffect(() => {
+        setMounted(true)
+    }, [])
+
     if (!mounted) return <div className="glass-panel p-4 rounded-xl border border-white/5 animate-pulse h-[200px]" />
 
     return (
@@ -74,7 +79,7 @@ export function StatusCard() {
             <div className={`text-[9px] font-mono border-l border-white/10 pl-3 py-1 text-gray-500 leading-tight`}>
                 {isArmed 
                   ? ">> Redirecting arbitrage margin to LP Pool..."
-                  : Number(consensusStr) > 0 
+                  : divergence > 500 
                   ? ">> Alert: L1 Divergence found. Validating..."
                   : ">> Sentinel node polling Unichain Sepolia RPC..."
                 }
