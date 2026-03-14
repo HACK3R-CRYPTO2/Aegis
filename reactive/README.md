@@ -1,25 +1,26 @@
-# Aegis Reactive Sentinel 🧠
+# Aegis Prime: Reactive Surveillance Sentinel 🧠
 
-The **Reactive Sentinel** is the "brain" of the Aegis system. It utilizes **Reactive Network** to bridge the gap between Ethereum Mainnet (L1) and Unichain (L2) with sub-second latency.
+The **Reactive Sentinel** is the autonomous nervous system of the Aegis protocol. It utilizes the **Reactive Network** to bridge the gap between Ethereum Mainnet (L1) and the Unichain Hook Fortress (L2) with sub-second, bridge-less latency.
 
-## Architecture
+## Architecture: The Kinetic Strike
 
-The Sentinel is a "Reactive Smart Contract" (RSC) that lives on the Reactive Network.
+The Sentinel operates as a **Reactive Smart Contract (RSC)**, providing continuous surveillance over market volatility:
 
-1.  **Listen**: It subscribes to the `PriceUpdate` event from our Oracle contract on **Sepolia**.
-2.  **React**: When it detects a price drop > 5% (the "Crash Threshold"), it executes logic off-chain in the ReactVM.
-3.  **Act**: It sends a cross-chain transaction to **Unichain** to call `setPanicMode(true)` on the Aegis Hook.
+1.  **Direct Surveillance**: Subscribes to the `PriceUpdate` event from the **Aegis Mock Oracle** on Sepolia (L1).
+2.  **Autonomous Analysis**: High-fidelity monitoring of price divergence. When a breach threshold is crossed, the Reactive VM triggers a kinetic response.
+3.  **Defensive Strike**: Fires an autonomous, cross-chain transaction to Unichain to arm the **Equilibrium Shield**, instantly overriding pool fees to protect LPs.
 
-## Implementation
+## Implementation: Hardened Logic
 
-For easier development and testing within a single Foundry workspace, the Solidity code for the Sentinel is located in the `contracts` directory:
+The core Sentinel logic is decoupled for maximum performance. The source is located within the protocol's hardened contract workspace:
 
-👉 **[Contract Source](../contracts/src/AegisSentinel.sol)**
+👉 **[Sentinel Source](../contracts/src/AegisSentinel.sol)**
 
-## Configuration
+## Operational Configuration
 
-The Sentinel is configured to listen to specific Chain IDs:
-*   **Origin**: Sepolia (Chain ID `11155111`)
-*   **Destination**: Unichain (Chain ID `1301`)
+The Sentinel is tuned for high-frequency responsiveness across the following vectors:
+*   **Origin Pulse**: Sepolia (Chain ID `11155111`)
+*   **Tactical Destination**: Unichain (Chain ID `1301`)
 
-These can be modified in `contracts/src/AegisSentinel.sol` before deployment.
+---
+© 2026 Aegis Prime Protocol | Hardened for Performance
