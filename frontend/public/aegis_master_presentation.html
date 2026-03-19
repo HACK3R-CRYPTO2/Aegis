@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aegis Prime - Master Demo</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        /* --- 1. THE SETUP & BASE STYLES --- */
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { background-color: #050505; display: flex; justify-content: center; align-items: center; min-height: 100vh; font-family: 'Inter', sans-serif; color: #c9d1d9; overflow: hidden; }
+        .slide-container { display: none; flex-direction: column; align-items: flex-start; background-color: #080c14; background-image: radial-gradient(circle at 0% 0%, rgba(0, 122, 255, 0.08), transparent 40%), radial-gradient(circle at 100% 100%, rgba(255, 0, 122, 0.08), transparent 40%); border: 1px solid #1a2235; border-radius: 12px; box-shadow: 0 20px 40px rgba(0, 0, 0, 0.8); height: 720px; width: 1280px; padding: 60px; position: relative; animation: fadeIn 0.4s ease-in-out; }
+        .slide-container.active { display: flex; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .slide-container::after { content: ''; position: absolute; bottom: 0; left: 0; width: 100%; height: 4px; background: linear-gradient(90deg, #007aff, #ff007a, #00ff66); opacity: 0.7; }
+        /* --- 2. TYPOGRAPHY --- */
+        h1, h2, h3, h4 { font-family: 'Space Grotesk', sans-serif; color: #ffffff; font-weight: 700; }
+        .slide-title { font-size: 48px; margin-bottom: 20px; width: 100%; text-align: center; letter-spacing: -1px; position: relative; z-index: 2; }
+        p { font-size: 18px; line-height: 1.6; margin-bottom: 15px; }
+        .highlight-pink { color: #ff007a; } .highlight-green { color: #00ff66; } .highlight-blue { color: #007aff; } .highlight-red { color: #ff3b30; } 
+        .slide-description { font-size: 20px; color: #9ca3af; width: 100%; text-align: center; margin-bottom: 40px; }
+
+        /* --- 3. HERO SLIDE 1 --- */
+        .hero-epic { display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; width: 100%; height: 100%; }
+        .hero-epic i { font-size: 90px; color: #007aff; margin-bottom: 25px; animation: pulse 2.5s infinite; }
+        .hero-epic h1 { font-size: 96px; line-height: 1.1; margin-bottom: 10px; letter-spacing: -3px; }
+        .hero-epic .subtitle { font-size: 38px; font-family: 'Space Grotesk', sans-serif; color: #00ff66; margin-bottom: 50px; letter-spacing: 3px; font-weight: 600; text-transform: uppercase; }
+        .hero-epic p { font-size: 24px; color: #d1d5db; max-width: 800px; margin-bottom: 15px; }
+        @keyframes pulse { 0% { transform: scale(1); filter: drop-shadow(0 0 10px rgba(0,122,255,0.4)); } 50% { transform: scale(1.05); filter: drop-shadow(0 0 30px rgba(0,122,255,0.8)); } 100% { transform: scale(1); filter: drop-shadow(0 0 10px rgba(0,122,255,0.4)); } }
+        
+        /* --- 4. TREE DIAGRAMS --- */
+        .tree { display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; margin-top: 10px; z-index: 2;}
+        .t-root { background: #111827; border: 2px solid #ff3b30; border-radius: 16px; padding: 20px 40px; text-align: center; box-shadow: 0 10px 25px rgba(255,59,48,0.2); width: 450px; }
+        .t-root h3 { color: #ff3b30; font-size: 26px; margin-bottom: 5px; }
+        .t-root p { color: #d1d5db; margin: 0; }
+        .t-stem { width: 2px; height: 30px; background: #ff3b30; }
+        .t-bar-container { width: 780px; position: relative; height: 30px; }
+        .t-bar { width: 100%; height: 2px; background: #ff3b30; position: absolute; top: 0; left: 0; }
+        .t-drop-left, .t-drop-mid, .t-drop-right { width: 2px; height: 30px; background: #ff3b30; position: absolute; top: 0; }
+        .t-drop-left { left: 0; }
+        .t-drop-mid { left: 50%; transform: translateX(-50%); }
+        .t-drop-right { right: 0; }
+        .t-drop-left::after, .t-drop-mid::after, .t-drop-right::after { content: '▼'; position: absolute; bottom: -8px; left: -5px; color: #ff3b30; font-size: 14px; background: #080c14; padding: 0 2px;}
+        .t-branches { display: flex; justify-content: space-between; width: 840px; } 
+        .t-branch { background: #111827; border: 2px solid #007aff; border-radius: 16px; padding: 25px 20px; text-align: center; width: 260px; display: flex; flex-direction: column; align-items: center; }
+        .t-branch i { font-size: 32px; color: #007aff; margin-bottom: 15px; }
+        .t-branch h4 { color: #fff; font-size: 20px; margin-bottom: 10px; border-bottom: 1px solid rgba(0,122,255,0.3); padding-bottom: 8px; width: 100%;}
+        .t-branch p { color: #9ca3af; font-size: 15px; margin: 0; line-height: 1.5; }
+
+        .t-root.green { border-color: #00ff66; box-shadow: 0 10px 25px rgba(0,255,102,0.15); }
+        .t-root.green h3 { color: #00ff66; }
+        .t-stem.green, .t-bar.green, .t-drop-left.green, .t-drop-mid.green, .t-drop-right.green { background: #00ff66; }
+        .t-drop-left.green::after, .t-drop-mid.green::after, .t-drop-right.green::after { color: #00ff66; }
+        .t-branch.green-box { border-color: #00ff66; }
+        .t-branch.green-box i { color: #00ff66; }
+        .t-branch.green-box h4 { border-bottom-color: rgba(0,255,102,0.3); }
+        .t-branch.pink-box { border-color: #ff007a; }
+        .t-branch.pink-box i { color: #ff007a; }
+        .t-branch.pink-box h4 { border-bottom-color: rgba(255,0,122,0.3); }
+
+        /* --- 5. ARCHITECTURE DIAGRAM --- */
+        .arch-container { position: relative; width: 1160px; height: 450px; margin: 0 auto; margin-top: 50px; }
+        .arch-node { position: absolute; transform: translate(-50%, -50%); background: rgba(17, 24, 39, 0.85); backdrop-filter: blur(10px); border: 1px solid; border-radius: 16px; padding: 20px; width: 240px; text-align: center; z-index: 10; box-shadow: 0 15px 30px rgba(0,0,0,0.5); }
+        .arch-node.oracle { top: 150px; left: 150px; border-color: rgba(255, 255, 255, 0.3); }
+        .arch-node.sentinel { top: 150px; left: 580px; border-color: #007aff; box-shadow: 0 0 30px rgba(0, 122, 255, 0.2); background: rgba(0, 122, 255, 0.05); }
+        .arch-node.hook { top: 150px; left: 1010px; border-color: #ff007a; box-shadow: 0 0 30px rgba(255, 0, 122, 0.2); background: rgba(255, 0, 122, 0.05); }
+        .arch-node.attacker { top: 380px; left: 800px; border-color: #ff3b30; box-shadow: 0 0 30px rgba(255, 59, 48, 0.2); }
+        .arch-node .node-icon { font-size: 36px; margin-bottom: 12px; }
+        
+        .arch-svg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; pointer-events: none; }
+        .flow-line { fill: none; stroke-width: 3; stroke-dasharray: 8 8; animation: flowAnim 1.5s linear infinite; }
+        .flow-line.red { stroke: #ff3b30; }
+        .flow-line.solid { stroke-dasharray: none; animation: none; opacity: 0.3; }
+        @keyframes flowAnim { to { stroke-dashoffset: -16; } }
+        .arch-label { position: absolute; background: #111827; padding: 6px 14px; border-radius: 20px; font-size: 13px; font-weight: 600; z-index: 5; transform: translate(-50%, -50%); border: 1px solid; white-space: nowrap; box-shadow: 0 4px 10px rgba(0,0,0,0.5); }
+
+        /* --- 6. EXTERNAL LINKS --- */
+        .top-left-nav { position: fixed; top: 30px; left: 30px; display: flex; gap: 15px; z-index: 100; opacity: 0.7; transition: opacity 0.3s; }
+        .top-left-nav:hover { opacity: 1; }
+        .nav-btn { background: rgba(17, 24, 39, 0.9); border: 1px solid #1f2937; color: #fff; text-decoration: none; padding: 10px 20px; border-radius: 8px; font-family: 'Space Grotesk', sans-serif; font-weight: 600; font-size: 16px; display: flex; align-items: center; gap: 10px; backdrop-filter: blur(5px); }
+        .comparison-table { width: 100%; border-collapse: collapse; margin-top: 20px; background: #111827; border-radius: 16px; overflow: hidden; border: 1px solid #1f2937; }
+        .comparison-table th, .comparison-table td { padding: 20px 30px; text-align: left; border-bottom: 1px solid #1f2937; }
+        .presentation-controls { position: fixed; bottom: 20px; right: 20px; background: rgba(0,0,0,0.5); padding: 10px 20px; border-radius: 30px; display: flex; gap: 20px; opacity: 0.2; transition: opacity 0.3s; z-index: 100; }
+        .presentation-controls:hover { opacity: 1; }
+        .control-btn { background: none; border: none; color: white; font-size: 24px; cursor: pointer; }
+    </style>
+</head>
+<body>
+
+<div class="top-left-nav">
+    <a href="https://github.com/HACK3R-CRYPTO2/Aegis" target="_blank" class="nav-btn">
+        <i class="fa-brands fa-github"></i> GitHub
+    </a>
+    <a href="https://github.com/HACK3R-CRYPTO2/Aegis/blob/main/README.md" target="_blank" class="nav-btn">
+        <i class="fa-solid fa-book"></i> Docs
+    </a>
+</div>
+
+<div class="presentation-controls">
+    <button class="control-btn" onclick="prevSlide()"><i class="fa-solid fa-chevron-left"></i></button>
+    <span class="slide-counter" style="color: #9ca3af; font-family: 'Space Grotesk';"><span id="current-slide">1</span> / 7</span>
+    <button class="control-btn" onclick="nextSlide()"><i class="fa-solid fa-chevron-right"></i></button>
+</div>
+
+<!-- Slide 1: Welcome to the Fortress -->
+<div class="slide-container active" id="slide1">
+    <div class="hero-epic">
+        <i class="fa-solid fa-shield-halved"></i>
+        <h1>Aegis <span class="highlight-blue">Prime</span></h1>
+        <div class="subtitle">The Tactical Fortress</div>
+        <p>Stop being the target. Start being the predator.</p>
+        <p style="color: #9ca3af;">High-frequency liquidity protection powered by the Reactive Network and Uniswap v4.</p>
+    </div>
+</div>
+
+<!-- Slide 2: The Problem (Broken Economics) -->
+<div class="slide-container" id="slide2" style="align-items: center;">
+    <h2 class="slide-title">The <span class="highlight-red">Problem</span>: Defenseless LPs</h2>
+    <p class="slide-description">Traditional liquidity provision is a passive, defenseless game.</p>
+    
+    <div class="tree">
+        <div class="t-root">
+            <h3>Static LP Vulnerability</h3>
+            <p>The "Dead Zone" of Passive Capital</p>
+        </div>
+        <div class="t-stem"></div>
+        <div class="t-bar-container">
+            <div class="t-bar"></div>
+            <div class="t-drop-left"></div>
+            <div class="t-drop-mid"></div>
+            <div class="t-drop-right"></div>
+        </div>
+        <div class="t-branches">
+            <div class="t-branch">
+                <i class="fa-solid fa-clock"></i>
+                <h4>Oracle Latency</h4>
+                <p>On-chain oracles update too slowly during a crash, leaving LPs behind the global market.</p>
+            </div>
+            <div class="t-branch">
+                <i class="fa-solid fa-robot" style="color: #ff3b30;"></i>
+                <h4 style="color: #ff3b30; border-color: rgba(255,59,48,0.3);">Arbitrage Bleed</h4>
+                <p>Hyper-fast bots detect market moves milliseconds early, draining value from uniswap pools before LPs can react.</p>
+            </div>
+            <div class="t-branch">
+                <i class="fa-solid fa-skull-crossbones"></i>
+                <h4>LVR Decay</h4>
+                <p>Passive LPs take the "Loss Versus Rebalancing" (LVR) hits during every major market swing.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Slide 3: The Solution (Tactical Armor) -->
+<div class="slide-container" id="slide3" style="align-items: center;">
+    <h2 class="slide-title">The <span class="highlight-green">Solution</span>: Equilibrium Shield</h2>
+    <p class="slide-description">Autonomous surveillance and reactive defense for your capital.</p>
+    
+    <div class="tree">
+        <div class="t-root green">
+            <h3>Tactical Protection Hub</h3>
+            <p>Active Counter-Strike Engine</p>
+        </div>
+        <div class="t-stem green"></div>
+        <div class="t-bar-container">
+            <div class="t-bar green"></div>
+            <div class="t-drop-left green"></div>
+            <div class="t-drop-mid green"></div>
+            <div class="t-drop-right green"></div>
+        </div>
+        <div class="t-branches">
+            <div class="t-branch green-box">
+                <i class="fa-solid fa-satellite"></i>
+                <h4>Reactive Sentinel</h4>
+                <p>Autonomous monitoring on Reactive Network detected L1 price pulses at sub-second speed.</p>
+            </div>
+            <div class="t-branch pink-box">
+                <i class="fa-solid fa-bolt"></i>
+                <h4>Equilibrium Hook</h4>
+                <p>Custom V4 Hook that calculates price divergence in real-time to neutralize arbitrage profit.</p>
+            </div>
+            <div class="t-branch">
+                <i class="fa-solid fa-coins"></i>
+                <h4>Margin Capture</h4>
+                <p>Protocol captures the attacker's margin as surplus profit, re-directing it back to the LP.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Slide 4: Architecture Sequence -->
+<div class="slide-container" id="slide4">
+    <h2 class="slide-title"><span class="highlight-blue">Architecture</span> Sequence</h2>
+    <div class="arch-container">
+        <svg class="arch-svg" viewBox="0 0 1160 450">
+            <defs>
+                <marker id="arrow-blue" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" fill="#007aff"/></marker>
+                <marker id="arrow-pink" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" fill="#ff007a"/></marker>
+                <marker id="arrow-red" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" fill="#ff3b30"/></marker>
+            </defs>
+            <!-- L1 to Sentinel -->
+            <path d="M 270 150 L 460 150" class="flow-line solid" stroke="#007aff"/>
+            <path d="M 270 150 L 460 150" class="flow-line" stroke="#007aff" marker-end="url(#arrow-blue)"/>
+            <!-- Sentinel to Unichain Hook -->
+            <path d="M 700 150 L 890 150" class="flow-line solid" stroke="#ff007a"/>
+            <path d="M 700 150 L 890 150" class="flow-line" stroke="#ff007a" marker-end="url(#arrow-pink)"/>
+            <!-- Attacker to Hook -->
+            <path d="M 800 330 L 1010 230" class="flow-line solid" stroke="#ff3b30"/>
+            <path d="M 800 330 L 1010 230" class="flow-line red" marker-end="url(#arrow-red)"/>
+        </svg>
+        <div class="arch-label" style="top: 125px; left: 365px; color: #007aff; border-color: rgba(0,122,255,0.3);">1. Price Pulse (L1)</div>
+        <div class="arch-label" style="top: 125px; left: 795px; color: #ff007a; border-color: rgba(255,0,122,0.3);">2. Arm Shield (Trigger Callback)</div>
+        <div class="arch-label" style="top: 300px; left: 930px; color: #ff3b30; border-color: rgba(255,59,48,0.3);">3. Attack Blocked (Arbitrage Tax)</div>
+        
+        <div class="arch-node oracle">
+            <div class="node-icon"><i class="fa-solid fa-server"></i></div>
+            <h4>MockOracle (L1)</h4>
+            <p>Truth Source</p>
+        </div>
+        <div class="arch-node sentinel">
+            <div class="node-icon highlight-blue"><i class="fa-solid fa-satellite-dish"></i></div>
+            <h4>Aegis Sentinel</h4>
+            <p>Autonomous Vigilance</p>
+        </div>
+        <div class="arch-node hook">
+            <div class="node-icon highlight-pink"><i class="fa-solid fa-helmet-safety"></i></div>
+            <h4>Aegis Hook</h4>
+            <p>Reflexive Defenses</p>
+        </div>
+        <div class="arch-node attacker">
+            <div class="node-icon highlight-red"><i class="fa-solid fa-user-ninja"></i></div>
+            <h4>Arbitrage Bot</h4>
+            <p>Toxic Flow</p>
+        </div>
+    </div>
+</div>
+
+<!-- Slide 5: Industry Comparison -->
+<div class="slide-container" id="slide5" style="align-items: center;">
+    <h2 class="slide-title">Operational <span class="highlight-pink">Dominance</span></h2>
+    <div class="comparison-container" style="width: 1000px; margin-top: 20px;">
+        <table class="comparison-table">
+            <thead>
+                <tr>
+                    <th>Metric</th>
+                    <th>Aegis Prime Fortress</th>
+                    <th>Passive LP Pool</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>LVR Protection</strong></td>
+                    <td><span class="highlight-green">Active Diversion Tax</span></td>
+                    <td><span class="highlight-red">Total Exposure</span></td>
+                </tr>
+                <tr>
+                    <td><strong>Decision Speed</strong></td>
+                    <td><span class="highlight-green">Sub-second Reactive Pulse</span></td>
+                    <td><span class="highlight-red">Minutes (Oracle Lag)</span></td>
+                </tr>
+                <tr>
+                    <td><strong>Systemic Risk</strong></td>
+                    <td><span class="highlight-green">Self-Stabilizing Gap-Fill</span></td>
+                    <td><span class="highlight-red">High (Toxic Drain)</span></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Slide 6: Code Walkthrough -->
+<div class="slide-container" id="slide6" style="background-color: #080c14; background-image: radial-gradient(circle at 50% 50%, rgba(0, 122, 255, 0.05), transparent 60%); justify-content: center; align-items: center;">
+    <i class="fa-solid fa-microchip" style="font-size: 80px; color: #007aff; margin-bottom: 30px;"></i>
+    <h1 style="font-size: 64px; margin-bottom: 20px;">Tactical Walkthrough</h1>
+    <p style="font-size: 24px; color: #d1d5db; max-width: 800px; text-align: center; margin-bottom: 40px;">
+        Let's look at the command logic within <strong>AegisHook.sol</strong> and <strong>AegisSentinel.sol</strong>.
+    </p>
+    <div style="display: flex; gap: 40px; margin-top: 20px; width: 100%; max-width: 1000px;">
+        <div style="flex: 1; background: rgba(17,24,39,0.9); padding: 30px; border-radius: 12px; border: 1px solid #007aff; text-align: left;">
+            <h4 style="color: #007aff; margin-bottom: 10px; font-size: 24px;">The Shield</h4>
+            <p style="color: #9ca3af;">Dynamic fee override in `_beforeSwap` that computes price divergence in real-time.</p>
+        </div>
+        <div style="flex: 1; background: rgba(17,24,39,0.9); padding: 30px; border-radius: 12px; border: 1px solid #ff007a; text-align: left;">
+            <h4 style="color: #ff007a; margin-bottom: 10px; font-size: 24px;">The Radar</h4>
+            <p style="color: #9ca3af;">Reactive cross-chain callback bridging L1 fair-market data to Unichain liquidity.</p>
+        </div>
+    </div>
+</div>
+
+<!-- Slide 7: Live Demo -->
+<div class="slide-container" id="slide7" style="background-color: #050505; align-items: center; justify-content: center; border-color: #00ff66;">
+    <i class="fa-solid fa-satellite" style="font-size: 80px; color: #00ff66; margin-bottom: 30px; animation: pulse 2s infinite;"></i>
+    <h1 style="font-size: 64px; margin-bottom: 20px;">Fortress HUD</h1>
+    <p class="highlight-green" style="font-size: 24px; font-family: 'Space Grotesk'; letter-spacing: 2px;">LIVE MONITORING INITIATED</p>
+    <p style="color: #9ca3af; margin-top: 10px;">Switching to Aegis Prime Command Center</p>
+</div>
+
+<script>
+    let currentSlide = 1;
+    const totalSlides = 7;
+
+    function showSlide(index) {
+        document.querySelectorAll('.slide-container').forEach(s => s.classList.remove('active'));
+        document.getElementById('slide' + index).classList.add('active');
+        document.getElementById('current-slide').innerText = index;
+    }
+
+    function nextSlide() {
+        if (currentSlide < totalSlides) { currentSlide++; showSlide(currentSlide); }
+    }
+
+    function prevSlide() {
+        if (currentSlide > 1) { currentSlide--; showSlide(currentSlide); }
+    }
+
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'ArrowRight' || e.key === ' ') nextSlide();
+        else if (e.key === 'ArrowLeft') prevSlide();
+    });
+</script>
+
+</body>
+</html>
