@@ -38,7 +38,7 @@ export const reactiveLasna = defineChain({
 export const config = createConfig({
     chains: [sepolia, unichainSepolia, reactiveLasna],
     transports: {
-        [sepolia.id]: http("https://eth-sepolia.g.alchemy.com/v2/uHo7ICSBqpDRguF-DhjWWF72l-sPapYX"),
+        [sepolia.id]: http("https://ethereum-sepolia-rpc.publicnode.com"),
         [unichainSepolia.id]: http("https://unichain-sepolia-rpc.publicnode.com"),
         [reactiveLasna.id]: http("https://lasna-rpc.rnk.dev/"),
     },
